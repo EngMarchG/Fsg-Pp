@@ -1,0 +1,255 @@
+@import url("https://fonts.googleapis.com/css2?family=Lexend&display=swap");
+
+:root {
+  --font: "Lexend", sans-serif;
+  --dark-purple: #242038;
+  --button-secondary-background-fill: #c5b0fc;
+  --button-secondary-background-fill-hover: #a288e3;
+  --button-secondary-border-color: var(--dark-purple);
+  --border-color-primary: #9067c6;
+
+  --slider-color: #c5b0fc;
+  --block-title-text-color: #fafaff;
+  --input-background-fill: var(--dark-purple);
+  --neutral-800: #fafaff;
+
+  --checkbox-label-background-fill: var(--dark-purple);
+  --checkbox-label-background-fill-hover: var(--dark-purple);
+  --checkbox-background-color: #a288e3;
+  --checkbox-border-color: #a288e3;
+  --checkbox-background-color-hover: #c5b0fc;
+  --checkbox-background-color-selected: var(--dark-purple);
+  --checkbox-border-color-focus: var(--dark-purple);
+  --checkbox-border-color-selected: #c5b0fc;
+  --shadow-spread: 3px;
+  --shadow-inset: rgba(0, 0, 0, 0.05) 0px 2px 4px 0px inset;
+  --shadow-drop: 0px;
+  --input-shadow-focus: 0 0 0 var(--shadow-spread) #c5b0fc, var(--shadow-inset);
+  --input-border-color-focus: #c5b0fc;
+
+  --background-fill-primary: var(--dark-purple);
+
+  --block-background-fill: var(--dark-purple);
+}
+
+@-webkit-keyframes popUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dark {
+  --font: "Lexend", sans-serif;
+  --dark-purple: #242038;
+  --button-secondary-background-fill: #c5b0fc;
+  --button-secondary-background-fill-hover: #a288e3;
+  --button-secondary-border-color: var(--dark-purple);
+  --border-color-primary: #9067c6;
+
+  --slider-color: #c5b0fc;
+  --block-title-text-color: #fafaff;
+  --input-background-fill: var(--dark-purple);
+  --neutral-800: #fafaff;
+
+  --checkbox-label-background-fill: var(--dark-purple);
+  --checkbox-label-background-fill-hover: var(--dark-purple);
+  --checkbox-background-color: #a288e3;
+  --checkbox-border-color: #a288e3;
+  --checkbox-background-color-hover: #c5b0fc;
+  --checkbox-background-color-selected: var(--dark-purple);
+  --checkbox-border-color-focus: var(--dark-purple);
+  --checkbox-border-color-selected: #c5b0fc;
+  --shadow-spread: 3px;
+  --shadow-inset: rgba(0, 0, 0, 0.05) 0px 2px 4px 0px inset;
+  --shadow-drop: 0px;
+  --input-shadow-focus: 0 0 0 var(--shadow-spread) #c5b0fc, var(--shadow-inset);
+  --input-border-color-focus: #c5b0fc;
+
+  --background-fill-primary: var(--dark-purple);
+  --block-background-fill: var(--dark-purple);
+}
+
+.gradio-container {
+  background-color: var(--dark-purple);
+}
+
+.svelte-vt1mxs {
+  background-color: var(--dark-purple);
+}
+
+.block.svelte-mppz8v {
+  background-color: var(--dark-purple);
+}
+
+.selected.svelte-1g805jl {
+  background: var(--border-color-primary);
+}
+
+.svelte-1g805jl button:focus {
+  background: var(--dark-purple);
+}
+.svelte-1g805jl button {
+  background: #211a1d;
+}
+.svelte-1g805jl button:hover {
+  color: #ffff;
+}
+
+[class*="form"][class*="svelte"] {
+  border: none !important;
+  border-radius: 0px !important;
+}
+
+#filtering > span,
+#pixiv > span,
+#pixiv-filters > span,
+#imageControl > span,
+#zeroAIhover > span {
+  position: relative;
+  z-index: 0;
+}
+
+#filtering .svelte-1qxcj04 > span,
+#pixiv .svelte-1qxcj04 > span,
+#pixiv-filters .svelte-1qxcj04 > span,
+#imageControl .svelte-1qxcj04 > span,
+#zeroAIhover .svelte-1qxcj04 > span {
+  position: relative;
+}
+
+#filtering .svelte-1qxcj04 > span::after,
+#pixiv .svelte-1qxcj04 > span::after,
+#pixiv-filters .svelte-1qxcj04 > span::after,
+#imageControl .svelte-1qxcj04 > span::after,
+#zeroAIhover .svelte-1qxcj04 > span::after {
+  position: absolute;
+  z-index: 1;
+  visibility: hidden;
+  background-color: #c5b0fc;
+  color: #fff;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  bottom: 150%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+#filtering .svelte-1qxcj04 > span::before,
+#pixiv .svelte-1qxcj04 > span::before,
+#pixiv-filters .svelte-1qxcj04 > span::before,
+#imageControl .svelte-1qxcj04 > span::before,
+#zeroAIhover .svelte-1qxcj04 > span::before {
+  content: "";
+  position: absolute;
+  visibility: hidden;
+  bottom: 105%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #c5b0fc transparent transparent transparent;
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(7) > span::after,
+#zeroAIhover .svelte-1qxcj04 > :nth-child(1) > span::after,
+#pixiv-filters .svelte-1qxcj04 > :nth-child(4) > span::after {
+  content: "AI to download 'good' images";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(6) > span::after {
+  content: "Continue if any error occurs";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(5) > span::after {
+  content: "General (SFW) images only";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(4) > span::after {
+  content: "Allows questionable images";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(3) > span::after {
+  content: "Removes explicit images only";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(2) > span::after {
+  content: "Images must include all tags given";
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(1) > span::after {
+  content: "Order by score";
+}
+
+#filtering .svelte-1qxcj04 > span:hover::after,
+#filtering .svelte-1qxcj04 > span:hover::before,
+#pixiv .svelte-1qxcj04 > span:hover::after,
+#pixiv .svelte-1qxcj04 > span:hover::before,
+#pixiv-filters .svelte-1qxcj04 > span:hover::after,
+#pixiv-filters .svelte-1qxcj04 > span:hover::before,
+#imageControl .svelte-1qxcj04 > span:hover::after,
+#imageControl .svelte-1qxcj04 > span:hover::before,
+#zeroAIhover .svelte-1qxcj04 > span:hover::after,
+#zeroAIhover .svelte-1qxcj04 > span:hover::before {
+  visibility: visible;
+  -webkit-animation: popUp 500ms;
+  animation: popUp 500ms;
+}
+
+#filtering .svelte-1qxcj04 > :nth-child(3):hover > span {
+  color: #e71d36;
+}
+#filtering .svelte-1qxcj04 > :nth-child(4):hover > span {
+  color: #ffd151;
+}
+#filtering .svelte-1qxcj04 > :nth-child(5):hover > span {
+  color: #21fa90;
+}
+
+#pixiv .svelte-1qxcj04 > :nth-child(1) > span::after {
+  content: "Downloads the previews";
+}
+
+#pixiv .svelte-1qxcj04 > :nth-child(2) > span::after {
+  content: "Downloads through the grid";
+}
+
+#pixiv-filters .svelte-1qxcj04 > :nth-child(1) > span::after {
+  content: "Downloads native image resolution";
+  font-size: 0.5rem;
+}
+#pixiv-filters .svelte-1qxcj04 > :nth-child(2) > span::after,
+#imageControl .svelte-1qxcj04 > :nth-child(1) > span::after {
+  content: "Continues Search if hangup occurs";
+}
+
+#pixiv-filters .svelte-1qxcj04 > :nth-child(3) > span::after {
+  content: "Starts from the oldest images";
+}
+
+#viewing-restrictions .svelte-1qxcj04 > :nth-child(1):hover span {
+  color: #21fa90;
+}
+
+#viewing-restrictions .svelte-1qxcj04 > :nth-child(2):hover span {
+  color: #e71d36;
+}
+
+#button-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
