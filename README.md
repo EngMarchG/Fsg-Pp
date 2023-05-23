@@ -202,12 +202,6 @@ Note: It is better to make the query specific such as using the character's full
 * Pixiv: Search for a specific Artist's artworks
 
 
-## Known Issues
-
-* Danbooru's iffy tagging may result in wrong character searches
-* Pixiv will give an error if the character searched for is NOT in the list of tags suggested
-* Pixiv is failing when adding spaces and writing full names (putting _ removes the suggestion if you type the full name)
-
 ## Troubleshooting
    For Windows users, in case you have problems with the installation.bat, disable the aliases in Windows:
    ![python_windows](/../public/assets/images/python_windows.png)  
