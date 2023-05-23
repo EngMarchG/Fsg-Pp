@@ -30,7 +30,8 @@ Just type what you want to find and it will filter out the best ones for you!
 
 1. Install Python (Recommend 3.10.7 and higher), while checking "Add Python to PATH"
 
-2. Install git
+2. Install git 
+   > **Note** Skip steps 2 and 3 if you would like to download the release here [Fsg-Pp releases](https://github.com/EngMarchG/Fsg-Pp/releases)
 
 3. Clone the repo ```git clone https://github.com/EngMarchG/Fsg_Pp.git```       
 
