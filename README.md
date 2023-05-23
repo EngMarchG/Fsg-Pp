@@ -14,6 +14,7 @@ Just type what you want to find and it will filter out the best ones for you!
 - [Features](#features)
     - [AI Mode](#ai-mode)
     - [Automatic Crop](#automatic-crop)
+    - [Image Search](#image-search)
     - [Pixiv](#pixiv)
     - [Danbooru](#danbooru)
     - [Zerochan](#zerochan)
@@ -21,7 +22,6 @@ Just type what you want to find and it will filter out the best ones for you!
     - [Windows](#windows)
     - [macOS/Linux](#macoslinux)
 - [Questionable Ideas](#questionable-ideas)
-- [Known Issues](#known-issues)
 - [Troubleshooting](#troubleshooting)
 - [Acknowledgment](#acknowledgment)
 - [Disclaimer](#disclaimer)
@@ -71,6 +71,9 @@ Note: AI mode usually attempts to classify images based on the thumbnail (this i
 Automatically detect faces and crop your images! Just drag and drop or click to upload an image 
 
 ![Automatic Crop GIF](/../public/assets/gifs/autocrop.gif)
+
+
+## Image Search
 
 This app currently allows you to search for images using three sites:
 
