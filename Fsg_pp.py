@@ -12,26 +12,26 @@ from sites.zerochan import getOrderedZerochanImages
 
 def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
              start_date, end_date, user_name, pass_word):
-        global imgz
-        driver = driver_instance.create_driver(exec_path.executable_path, profile=1)
-        imgz = getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
-                                    n_views=n_views, start_date=start_date,end_date=end_date, user_name=user_name, pass_word=pass_word)
-        print(imgz)
-        return imgz
+    global imgz
+    driver = driver_instance.create_driver(exec_path.executable_path, profile=1)
+    imgz = getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
+                                n_views=n_views, start_date=start_date,end_date=end_date, user_name=user_name, pass_word=pass_word)
+    print(imgz)
+    return imgz if imgz else []
 
-def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags):
+def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
     global imgz
     driver = driver_instance.create_driver(exec_path.executable_path)
-    imgz = getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path)
+    imgz = getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path,imageControl=imageControl)
     print(imgz)
-    return imgz
+    return imgz if imgz else []
 
-def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters):
+def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
     global imgz
     driver = driver_instance.create_driver(exec_path.executable_path)
-    imgz = getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters)
+    imgz = getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl)
     print(imgz)
-    return imgz
+    return imgz if imgz else []
 
 def open_folder(folder_path, mode=0):
     folder_opened = os.path.abspath(folder_path)
@@ -132,7 +132,9 @@ with gr.Blocks(css='style.css') as demo:
                     with gr.Row():
                         num_pages = gr.Slider(1,50, value=1, step=int, label="Number of Pages")
                     with gr.Row():
-                        filters = gr.CheckboxGroup(["Score", "Exact Match", "More PG", "Sensitive", "Strictly PG", "Continue Search", "AI Classifier"], label="Filters", type="index", elem_id="filtering")
+                        filters = gr.CheckboxGroup(["Score", "Exact Match", "More PG", "Sensitive", "Strictly PG", "AI Classifier"], label="Filters", type="index", elem_id="filtering")
+                    with gr.Row():
+                        imageControl = gr.CheckboxGroup(["Continue Search"], label="Image Control", type="index", elem_id="imageControl")
                     with gr.Row():
                         bl_tags = gr.Textbox(label="Tags to Filter", placeholder=("Add stuff like typical undergarments etc to ensure complete pg friendliness"),lines=2)
                     with gr.Row():
@@ -149,7 +151,7 @@ with gr.Blocks(css='style.css') as demo:
                         open_btn.click(fn=open_folder, inputs=folder_input)
 
             gallery.select(get_select_index, None, selected)
-            green_btn.click(danb_imgs, [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags], outputs=gallery)
+            green_btn.click(danb_imgs, [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl], outputs=gallery)
             
         
         # Zerochan Tab
@@ -162,9 +164,12 @@ with gr.Blocks(css='style.css') as demo:
                     with gr.Row():
                         num_pages = gr.Slider(1,50, value=1, step=int, label="Number of Pages")
                     with gr.Row():
-                        n_likes = gr.Number(value=0, label="Filter by Likes")
                         with gr.Row():
-                            filters = gr.CheckboxGroup(["AI Classifier"], label="Filters", type="index")  
+                            n_likes = gr.Number(value=0, label="Filter by Likes")
+                            with gr.Row():
+                                filters = gr.CheckboxGroup(["AI Classifier"], label="Filters", type="index",elem_id="zeroAIhover")
+                        with gr.Column():
+                            imageControl = gr.CheckboxGroup(["Continue Search"], label="Image Control", type="index", elem_id="imageControl")   
                     green_btn = gr.Button(label="Search", value="Search")
                 
                 with gr.Column():
@@ -178,7 +183,7 @@ with gr.Blocks(css='style.css') as demo:
                         open_btn.click(fn=open_folder, inputs=folder_input)
 
             gallery.select(get_select_index, None, selected)
-            green_btn.click(zero_imgs, [searchQuery, num_pics, num_pages, n_likes, filters], outputs=gallery)
+            green_btn.click(zero_imgs, [searchQuery, num_pics, num_pages, n_likes, filters,imageControl], outputs=gallery)
  
 
 demo.launch()
