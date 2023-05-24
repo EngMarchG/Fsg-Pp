@@ -68,7 +68,7 @@ Note: AI mode usually attempts to classify images based on the thumbnail (this i
 
 ## Automatic Crop 
 
-Automatically detect faces and crop your images! Just drag and drop or click to upload an image 
+Automatically detect faces and crop your images! Just drag and drop or click to upload an image.  
 
 ![Automatic Crop GIF](/../public/assets/gifs/autocrop.gif)
 
@@ -91,19 +91,20 @@ This app currently allows you to search for images using three sites:
 - Filter by Likes, bookmarks and/or views
 - Download images in the standard or native size
 - Continue on the previous page it ended or if it crashes (Ignores current query when checked)
+>**Note:** Pixiv search will ignore your option filters if you are not logged in.  
 
 ## Danbooru
 ![Danbooru PNG](/../public/assets/images/danbooru.png)
 - Allows downloading images that are ordered by Score
 - Allows filtering by tags (both inclusions and exclusions)
-- Has 3 modes of image restrictions gradually increasing the PG-Friendliness of the images found (More PG > SE)
+- Has 3 modes of image restrictions gradually increasing the PG-Friendliness of the images found (More Pg < Sensitive < Strictly PG)
 - Continue on the previous page it ended or if it crashes (Ignores current query when checked)
 
 ## Zerochan
 ![Zerochan PNG](/../public/assets/images/zerochan.png)
 - Filter by Likes 
-- Continue on the previous page it ended or if it crashes (Ignores current query when checked)
-Note: It is better to make the query specific such as using the character's full name. Ex: Searching 'Honkai' would fail due to the existance of several similar names. Searching 'Honkai star rail', on the other hand, would work since it is more specific and wouldn't get mixed up with other names.
+- Continue on the previous page it ended or if it crashes (Ignores current query when checked)  
+>**Note:** It is better to make the query specific such as using the character's full name. Ex: Searching 'Honkai' would fail due to the existance of several similar names. Searching 'Honkai star rail', on the other hand, would work since it is more specific and wouldn't get mixed up with other names.
 
 
  
