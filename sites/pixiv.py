@@ -108,7 +108,8 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
 
     if not success_login:
         # Click view all
-        driver.find_element(By.XPATH, '//*[@class="sc-s46o24-0 eiIrqZ"]').click()
+        if 1 not in imageControl:
+            driver.find_element(By.XPATH, '//*[@class="sc-s46o24-0 eiIrqZ"]').click()
     else:
         # Click illustrations only (since no need for view all)
         try:
