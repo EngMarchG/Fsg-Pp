@@ -10,6 +10,7 @@ from sites.pixiv import getOrderedPixivImages
 from sites.danbooru import getOrderedDanbooruImages
 from sites.zerochan import getOrderedZerochanImages
 
+
 def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
              start_date, end_date, user_name, pass_word):
     global imgz
@@ -104,9 +105,9 @@ with gr.Blocks(css='style.css') as demo:
                     with gr.Row():
                             end_date = gr.Textbox(label="End date", placeholder=("2022-09-22  YEAR-MONTH-DAY"))
                     with gr.Row():
-                            user_name = gr.Textbox(label="Email", type="email")
+                            user_name = gr.Textbox(label="Email", type="email", placeholder=("Account email for pixiv login"))
                     with gr.Row():
-                            pass_word = gr.Textbox(label="Password", type="password")
+                            pass_word = gr.Textbox(label="Password", type="password",placeholder=("Account password for pixiv login"))
                     
                 with gr.Column():
                     gallery=gr.Gallery(label="Image Preview")
