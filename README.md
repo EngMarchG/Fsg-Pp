@@ -91,7 +91,7 @@ This app currently allows you to search for images using three sites:
 - Filter by Likes, bookmarks and/or views
 - Download images in the standard or native size
 - Continue on the previous page it ended or if it crashes (Ignores current query when checked)
->**Note:** Pixiv search will ignore your option filters if you are not logged in.  
+>**Note:** Pixiv search will ignore your option filters if you are not logged in. You only have to log in once, unless you delete the browser profile created in the commands folder.  
 
 ## Danbooru
 ![Danbooru PNG](/../public/assets/images/danbooru.png)
