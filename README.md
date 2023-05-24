@@ -130,7 +130,7 @@ Note: It is better to make the query specific such as using the character's full
     venv\Scripts\python.exe -m pip install -r requirements.txt
 
       
-   For GPU torch:
+   For GPU torch (NVIDIA GPUs Only, ROCm is currently not supported due to its limited support from pytorch):
       
     venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
     
@@ -173,7 +173,15 @@ Note: It is better to make the query specific such as using the character's full
     
    Install PyTorch with GPU support on Linux:
    
+   (NVIDIA GPUs):
+   
     python3 -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+    
+    python3 -m pip install ultralytics
+    
+   (AMD GPUs):
+   
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2
     
     python3 -m pip install ultralytics
     
