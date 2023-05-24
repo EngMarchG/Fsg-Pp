@@ -1,8 +1,6 @@
-import sys
-sys.path.append("..")
-
 import time
 import urllib.request
+import os
 from random import randint
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys

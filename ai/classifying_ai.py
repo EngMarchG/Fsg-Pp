@@ -1,7 +1,4 @@
-import sys
-sys.path.append("..")
 import commands.exec_path 
-
 from ultralytics import YOLO
 from PIL import Image, ImageDraw, ImageFont, ImageFile
 import os
