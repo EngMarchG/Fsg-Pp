@@ -83,14 +83,6 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         searchQuery(user_search, driver, search_param["bar_search"], isLoggedIn=success_login)
     time.sleep(2)
 
-    if start_date and not success_login:
-        driver.get(driver.current_url + f"?scd={start_date}&ecd={end_date}")
-        time.sleep(2)
-    elif start_date and success_login:
-        cur_url = driver.current_url.split("?")
-        driver.get(cur_url[0] + f"?scd={start_date}&ecd={end_date}&" + cur_url[1])
-        time.sleep(2)
-
     premiumSearch = 1 if 0 in searchTypes else 0
     freemiumSearch = 1 if 1 in searchTypes else 0
     pg_friendly = 1 if 0 in viewRestriction else 0
@@ -107,8 +99,8 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         search_image(driver, exec_path, filters, search_param)
 
     if not success_login:
-        # Click view all
         if 1 not in imageControl:
+            # Click view all
             driver.find_element(By.XPATH, '//*[@class="sc-s46o24-0 eiIrqZ"]').click()
     else:
         # Click illustrations only (since no need for view all)
@@ -119,9 +111,15 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
 
             mode = ""
             order = ""
-
+            
+            if driver.current_url.find("s_mode=s_tag") == -1:
+                print("You cannot continue search from a non-log in url...")
+                return []
+            
+            cur_url = driver.current_url.split("?")
             if pg_friendly == 1 and r_18 == 1:
                 print("PG Friendly and r-18")
+                cur_url[1] = re.sub(r'mode=(safe|r18)&', '', cur_url[1])
                 pass
             elif pg_friendly == 1:
                 mode = "mode=safe&"
@@ -132,9 +130,19 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
             if order_by_oldest == 1:
                 order = "order=date&"
                 print("Order by oldest")
+            
+            
+            if start_date:
+                if cur_url[1].find("scd") != 0:
+                    cur_url_temp = cur_url[-1].split("&")
+                    cur_url = [cur_url[0]]
+                    cur_url.append(cur_url_temp[-1])
 
-            cur_url = driver.current_url.split("?")
-            driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
+            if not start_date:
+                driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
+            else:
+                print("Start date: " + start_date + " End date: " + end_date)
+                driver.get(cur_url[0] + f"?{order}{mode}scd={start_date}&ecd={end_date}&" + cur_url[1])
         except:
             pass
     
