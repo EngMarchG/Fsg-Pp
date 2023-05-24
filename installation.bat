@@ -73,8 +73,33 @@ if /i "%confirm%"=="y" (
     %PYTHON_CMD% -m venv --upgrade-deps venv
 )
 
-REM Activate the virtual environment
-call :activate_virtualenv
+REM Check if venv folder exists
+if exist venv\Scripts\activate.bat (
+    REM Activate the virtual environment
+    call venv\Scripts\activate.bat
+) else (
+    echo The virtual environment was not created successfully. Creating it using an alternative method...
+
+    REM Remove the existing venv folder
+    if exist venv (
+        rmdir /s /q venv
+    )
+
+    REM Create the virtual environment using virtualenv package
+    %PYTHON_CMD% -m pip install virtualenv
+    %PYTHON_CMD% -m virtualenv venv
+
+    REM Check if venv folder was created successfully
+    if not exist venv\Scripts\activate.bat (
+        echo Failed to create the virtual environment.
+        pause
+        exit /b
+    )
+
+    REM Activate the virtual environment
+    call venv\Scripts\activate.bat
+)
+
 
 REM Install dependencies from requirements.txt
 venv\Scripts\python.exe -m pip install -r requirements.txt
