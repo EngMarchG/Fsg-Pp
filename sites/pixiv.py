@@ -167,11 +167,11 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
     for page in range(searchLimit["pagecount"]):
         
         temp_img_len = len(image_locations)
-        WebDriverWait(driver, timeout=9).until(
-            EC.presence_of_element_located(
-                (By.XPATH, search_param["li_search"] + "//a")
-            )
-        )  # Added //a
+        try:
+            WebDriverWait(driver, timeout=9).until(EC.presence_of_element_located((By.XPATH, search_param["li_search"] + "//a")))
+        except:
+            driver.refresh()
+            WebDriverWait(driver, timeout=15).until(EC.presence_of_element_located((By.XPATH, search_param["li_search"] + "//a")))
         images = search_image_type(search_type, driver, search_param=search_param)
 
         for curr_iter, image in enumerate(images):

@@ -5,8 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 def searchQuery(user_search, driver, elem, mode=0, score="", isLoggedIn=True):
-
-
     if isLoggedIn == False:
         anchors = driver.find_elements(By.XPATH, '//*[@class="sc-93qi7v-2 hbGpVM"]//a')
         for n_iter,anchor in enumerate(anchors):
@@ -14,7 +12,11 @@ def searchQuery(user_search, driver, elem, mode=0, score="", isLoggedIn=True):
                 driver.execute_script("arguments[0].click();", anchor)
         
     user_search = user_search.lower()
-    WebDriverWait(driver, timeout=15).until(EC.presence_of_element_located((By.XPATH, elem)))
+    try:
+        WebDriverWait(driver, timeout=5).until(EC.presence_of_element_located((By.XPATH, elem)))
+    except:
+        driver.refresh()
+        WebDriverWait(driver, timeout=20).until(EC.presence_of_element_located((By.XPATH, elem)))
     search_bar = driver.find_element(By.XPATH, elem)
 
     try:
