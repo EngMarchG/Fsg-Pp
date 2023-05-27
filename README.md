@@ -1,12 +1,12 @@
 # Fsg_Pp
 
-Finally some good profile pictures! [Available on Hugging Spaces for Preview Purposes only](https://huggingface.co/spaces/Kyo-Kai/Fsg-Pp)
+Finally some good profile pictures! [Available on Hugging Spaces for Preview Purposes Only](https://huggingface.co/spaces/Kyo-Kai/Fsg-Pp)
 
 Got tired of constantly searching for new profile pictures?
 Or maybe even just the thought of changing it is a hassle.
 
 Well, Fsg_Pp aims to automate that for you!
-Just type what you want to find and it will filter out the best ones for you!
+Just type what you want to find and it will filter out the best ones for you!  
 [<img src="/../public/assets/images/finally.png" width="350" />](/../public/assets/images/finally.png)
 
 ## Quick Links
