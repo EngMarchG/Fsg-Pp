@@ -3,6 +3,7 @@ import gradio as gr
 import os
 import commands.exec_path as exec_path
 import commands.driver_instance as driver_instance
+import inspect
 
 from commands.universal import searchQuery
 from ai.autocrop import autoCropImages
@@ -10,29 +11,27 @@ from sites.pixiv import getOrderedPixivImages
 from sites.danbooru import getOrderedDanbooruImages
 from sites.zerochan import getOrderedZerochanImages
 
+def get_images(*args):
+    global_imgz = args[-1]
+    args = args[:-1]
 
-def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
-             start_date, end_date, user_name, pass_word):
-    global imgz
-    driver = driver_instance.create_driver(exec_path.executable_path, profile=1)
-    imgz = getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
-                                n_views=n_views, start_date=start_date,end_date=end_date, user_name=user_name, pass_word=pass_word)
-    print(imgz)
-    return imgz if imgz else []
-
-def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
-    global imgz
     driver = driver_instance.create_driver(exec_path.executable_path)
-    imgz = getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path,imageControl=imageControl)
-    print(imgz)
-    return imgz if imgz else []
+        
+    if len(args) == len(inspect.signature(getOrderedPixivImages).parameters)-2:
+        global_imgz = getOrderedPixivImages(driver, exec_path, *args)
+        print(global_imgz)
+        return {imgz_global: global_imgz, pix_gallery: global_imgz}
 
-def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
-    global imgz
-    driver = driver_instance.create_driver(exec_path.executable_path)
-    imgz = getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl)
-    print(imgz)
-    return imgz if imgz else []
+    elif len(args) == len(inspect.signature(getOrderedDanbooruImages).parameters)-2:
+        global_imgz = getOrderedDanbooruImages(driver, exec_path, *args)
+        print(global_imgz)
+        return {imgz_global:global_imgz, danb_gallery:global_imgz}
+
+    elif len(args) == len(inspect.signature(getOrderedZerochanImages).parameters)-2:
+        global_imgz = getOrderedZerochanImages(driver, exec_path, *args)
+        print(global_imgz)
+        return {imgz_global: global_imgz, zero_gallery: global_imgz}
+
 
 def open_folder(folder_path, mode=0):
     folder_opened = os.path.abspath(folder_path)
@@ -41,21 +40,22 @@ def open_folder(folder_path, mode=0):
     os.system(f'open "{folder_opened}"' if os.name == 'posix' else f'explorer "{folder_opened}"')
 
 imageIndex = 0
-imgz = []
 
 def get_select_index(evt: gr.SelectData):
     imageIndex=evt.index
     return evt.index
 
     
-def send_number(indx): 
+def send_number(indx,global_imgz): 
     imageIndex = indx
-    return imgz[int(imageIndex)], gr.Tabs.update(selected=0)
+    return {imgz_global:global_imgz, image:global_imgz[int(imageIndex)], tabs:gr.Tabs.update(selected=0)}
 
 def cropImages(image,crop_scale_factor):
     return autoCropImages(image,crop_scale_factor)
 
 with gr.Blocks(css='style.css') as demo:
+    imgz_global = gr.State([])
+  
     with gr.Tabs(selected=1) as tabs:
         selected = gr.Number(label="Gallery Number",visible=False)
         folder_input = gr.Textbox(value="./Images/", label="Enter Folder Path", visible=False)
@@ -74,6 +74,7 @@ with gr.Blocks(css='style.css') as demo:
                         green_btn.click(cropImages, [image,crop_scale_factor],outputs=outputImages)
                         open_btn = gr.Button(label="Open Folder",value="Open 📁",variant='secondary').style(size='sm')
                         open_btn.click(fn=open_folder, inputs=[folder_input,crop_scale_factor])
+
         # Pixiv Tab
         with gr.TabItem("Pixiv", id=1):
             with gr.Row():
@@ -110,17 +111,17 @@ with gr.Blocks(css='style.css') as demo:
                             pass_word = gr.Textbox(label="Password", type="password",placeholder=("Account password for pixiv login"))
                     
                 with gr.Column():
-                    gallery=gr.Gallery(label="Image Preview")
-                    gallery.style(preview=True,object_fit="cover",columns=5,container=True)
+                    pix_gallery=gr.Gallery(label="Image Preview")
+                    pix_gallery.style(preview=True,object_fit="cover",columns=5,container=True)
                     with gr.Row():
                         blue_btn = gr.Button(label="Auto Crop",value="Crop Selected Image",variant='secondary')
-                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        blue_btn.click(fn=send_number,inputs=[selected,imgz_global],outputs=[imgz_global, image, tabs])
                         open_btn = gr.Button(label="Open Folder",value="Open 📁",variant='secondary')
                         open_btn.click(fn=open_folder, inputs=folder_input)
 
-            gallery.select(get_select_index, None, selected)
-            green_btn.click(pix_imgs, [searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
-                                    start_date,end_date, user_name, pass_word], outputs=gallery)
+            pix_gallery.select(get_select_index, None, selected)
+            green_btn.click(get_images, [searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
+                                    start_date,end_date, user_name, pass_word, imgz_global], outputs=[imgz_global,pix_gallery])
 
 
         # Danbooru Tab
@@ -143,16 +144,16 @@ with gr.Blocks(css='style.css') as demo:
                     green_btn = gr.Button(label="Search", value="Search")
                 
                 with gr.Column():
-                    gallery=gr.Gallery(label="Image Preview")
-                    gallery.style(preview=True,object_fit="cover",columns=5,container=True)
+                    danb_gallery=gr.Gallery(label="Image Preview")
+                    danb_gallery.style(preview=True,object_fit="cover",columns=5,container=True)
                     with gr.Row():
                         blue_btn = gr.Button(label="Auto Crop",value="Crop Selected Image",variant='secondary')
-                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        blue_btn.click(fn=send_number,inputs=[selected,imgz_global],outputs=[imgz_global, image, tabs])
                         open_btn = gr.Button(label="Open Folder",value="Open 📁",variant='secondary')
                         open_btn.click(fn=open_folder, inputs=folder_input)
 
-            gallery.select(get_select_index, None, selected)
-            green_btn.click(danb_imgs, [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl], outputs=gallery)
+            danb_gallery.select(get_select_index, None, selected)
+            green_btn.click(get_images, [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl,imgz_global], outputs=[imgz_global,danb_gallery])
             
         
         # Zerochan Tab
@@ -174,17 +175,17 @@ with gr.Blocks(css='style.css') as demo:
                     green_btn = gr.Button(label="Search", value="Search")
                 
                 with gr.Column():
-                    gallery=gr.Gallery(label="Image Preview")
-                    gallery.style(preview=True,object_fit="cover",columns=5,container=True)
+                    zero_gallery=gr.Gallery(label="Image Preview")
+                    zero_gallery.style(preview=True,object_fit="cover",columns=5,container=True)
                     
                     with gr.Row():
                         blue_btn = gr.Button(label="Auto Crop",value="Crop Selected Image",variant='secondary')
-                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        blue_btn.click(fn=send_number,inputs=[selected,imgz_global],outputs=[imgz_global, image, tabs])
                         open_btn = gr.Button(label="Open Folder",value="Open 📁",variant='secondary')
                         open_btn.click(fn=open_folder, inputs=folder_input)
 
-            gallery.select(get_select_index, None, selected)
-            green_btn.click(zero_imgs, [searchQuery, num_pics, num_pages, n_likes, filters,imageControl], outputs=gallery)
+            zero_gallery.select(get_select_index, None, selected)
+            green_btn.click(get_images, [searchQuery, num_pics, num_pages, n_likes, filters,imageControl,imgz_global], outputs=[imgz_global,zero_gallery])
  
 
 demo.launch()
