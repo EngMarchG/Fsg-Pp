@@ -1,398 +1,188 @@
-import sys
-sys.path.append("..")
-
-import time
-import urllib.request
+import numpy as np
+import gradio as gr
 import os
-import re
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from datetime import date, datetime
-from random import randint
-from commands.driver_instance import create_url_headers, tab_handler
-from commands.exec_path import imgList
-from commands.universal import searchQuery, save_Search, continue_Search, contains_works
-from ai.classifying_ai import img_classifier
+import commands.exec_path as exec_path
+import commands.driver_instance as driver_instance
 
+from commands.universal import searchQuery
+from ai.autocrop import autoCropImages
+from sites.pixiv import getOrderedPixivImages
+from sites.danbooru import getOrderedDanbooruImages
+from sites.zerochan import getOrderedZerochanImages
 
-def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,searchTypes,viewRestriction,imageControl,
-                          n_likes,n_bookmarks,n_views, start_date=0,end_date=0, user_name=0, pass_word=0):
-    global image_locations, image_names, ultimatium, ai_mode, prev_search
-    image_names = imgList(mode=1)
-    image_locations = []
-    prev_search = 0
-    link = "https://www.pixiv.net/tags/illustration"
-    success_login = False
+def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
+             start_date, end_date, user_name, pass_word):
+    global imgz
+    driver = driver_instance.create_driver(profile=1)
+    imgz = getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
+                                n_views=n_views, start_date=start_date,end_date=end_date, user_name=user_name, pass_word=pass_word)
+    print(imgz)
+    return imgz if imgz else []
 
-    filters = {
-        "likes": 0 if not n_likes else n_likes,
-        "bookmarks": 0 if not n_bookmarks else n_bookmarks,
-        "viewcount": 0 if not n_views else n_views,
-    }
-    searchLimit = {"pagecount": num_pages, "imagecount": num_pics}
+def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
+    global imgz
+    driver = driver_instance.create_driver()
+    imgz = getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path,imageControl=imageControl)
+    print(imgz)
+    return imgz if imgz else []
 
-    start_date = start_date if date_handler(start_date) else ""
-    end_date = date.today() if not date_handler(end_date) else end_date
+def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
+    global imgz
+    driver = driver_instance.create_driver()
+    imgz = getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl)
+    print(imgz)
+    return imgz if imgz else []
 
-    if 1 in imageControl:
-        continue_Search(driver, link, mode=0)
-    else:
-        driver.get(link)
+def open_folder(folder_path, mode=0):
+    folder_opened = os.path.abspath(folder_path)
+    if mode:
+        folder_opened = os.path.abspath(os.path.join(folder_path, "cropped"))
+    os.system(f'open "{folder_opened}"' if os.name == 'posix' else f'explorer "{folder_opened}"')
 
-    # Will use those if not logged in
-    bar_search = '//input[@placeholder="Search works"]'
-    li_search = "//*[@class='sc-l7cibp-1 krFoBL']//li"
-    premium_search = "//*[@class='sc-l7cibp-1 krFoBL']//*[@class='sc-l7cibp-2 hDVsA-D']"
-    search_param = {
-        "bar_search": bar_search,
-        "li_search": li_search,
-        "premium_search": premium_search,
-    }
+imageIndex = 0
+imgz = []
 
-    try:
-        time.sleep(1)
-        if not driver.find_elements(By.CSS_SELECTOR, "a.sc-oh3a2p-3.dfWiNJ"):
-            success_login = True
+def get_select_index(evt: gr.SelectData):
+    imageIndex=evt.index
+    return evt.index
 
-        elif user_name and pass_word:
-            print("Logging in...")
-            if login_handler(driver, exec_path, user_name, pass_word):
-                success_login = True
-
-        if success_login:
-            bar_search = '//input[@placeholder="Search works"]'
-            li_search = "//*[@class='sc-l7cibp-1 krFoBL']//li"
-            premium_search = "//*[@class='sc-jn70pf-3 hFdYHr']//li"
-            search_param = {
-                "bar_search": bar_search,
-                "li_search": li_search,
-                "premium_search": premium_search,
-            }
-        else:
-            print("Failed! You are not logged in...")
-
-    except:
-        print("Failed! You are not logged in...")
-        pass
     
-    if 1 not in imageControl:
-        searchQuery(user_search, driver, search_param["bar_search"], isLoggedIn=success_login)
-    time.sleep(2)
+def send_number(indx): 
+    imageIndex = indx
+    return imgz[int(imageIndex)], gr.Tabs(selected=0)
 
-    if start_date and not success_login:
-        driver.get(driver.current_url + f"?scd={start_date}&ecd={end_date}")
-        time.sleep(2)
-    elif start_date and success_login:
-        cur_url = driver.current_url.split("?")
-        driver.get(cur_url[0] + f"?scd={start_date}&ecd={end_date}&" + cur_url[1])
-        time.sleep(2)
+def cropImages(image,crop_scale_factor):
+    return autoCropImages(image,crop_scale_factor)
 
-    premiumSearch = 1 if 0 in searchTypes else 0
-    freemiumSearch = 1 if 1 in searchTypes else 0
-    pg_friendly = 1 if 0 in viewRestriction else 0
-    r_18 = 1 if 1 in viewRestriction else 0
-    ultimatium = 1 if 0 in imageControl else 0
-    order_by_oldest = 1 if 2 in imageControl else 0
-    ai_mode = 1 if 3 in imageControl else 0
-
-    if not contains_works(driver, search_param["li_search"]):
-        print("No works found...")
-        return []
-    
-    if premiumSearch == 1:
-        search_image(driver, exec_path, filters, search_param)
-
-    if not success_login:
-        # Click view all
-        driver.find_element(By.XPATH, '//*[@class="sc-d98f2c-0 sc-s46o24-1 dAXqaU"]').click()
-    else:
-        # Click illustrations only (since no need for view all)
-        try:
-            driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/div[3]/div/div[5]/nav/a[2]").click()
-            print("Illustrations only")
-            time.sleep(1)
-
-            mode = ""
-            order = ""
-
-            if pg_friendly == 1 and r_18 == 1:
-                print("PG Friendly and r-18")
-                pass
-            elif pg_friendly == 1:
-                mode = "mode=safe&"
-                print("PG Friendly")
-            elif r_18 == 1:
-                mode = "mode=r18&"
-                print("r-18")
-            if order_by_oldest == 1:
-                order = "order=date&"
-                print("Order by oldest")
-
-            cur_url = driver.current_url.split("?")
-            driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
-        except:
-            pass
-    
-    prev_search = len(image_locations)
-    curr_page = driver.current_url
-    if freemiumSearch == 1:
-        while len(image_locations) < num_pics*num_pages:
-            search_image(driver,exec_path,filters,search_param=search_param,searchLimit=searchLimit)
-            if not valid_page(driver) and len(image_locations) < num_pics*num_pages:
-                print("Reached end of search results")
-                break
-    driver.quit()
-
-    return image_locations
-
-
-def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount": 1, "imagecount": 99},):
-    search_type = 0
-    skipped_images = 0
-
-    search_type = awaitPageLoad(driver=driver,searchLimit=searchLimit,search_param=search_param,search_type=search_type)
-    if search_type == -1:
-        return
-    # The main image searcher
-    for page in range(searchLimit["pagecount"]):
+with gr.Blocks(css='style.css') as demo:
+    with gr.Tabs(selected=1) as tabs:
+        selected = gr.Number(label="Gallery Number",visible=False)
+        folder_input = gr.Textbox(value="./Images/", label="Enter Folder Path", visible=False)
         
-        temp_img_len = len(image_locations)
-        WebDriverWait(driver, timeout=9).until(
-            EC.presence_of_element_located(
-                (By.XPATH, search_param["li_search"] + "//a")
-            )
-        )  # Added //a
-        images = search_image_type(search_type, driver, search_param=search_param)
+        # Automatic Crop Tab
+        with gr.TabItem("Automatic Crop", id=0):
+            with gr.Row():
+                with gr.Column():
+                    image = gr.Image(type="filepath")
+                    crop_scale_factor = gr.Slider(0.5,3, value=1.2,step=0.1, label="Crop Scale Factor")
+                with gr.Column():
+                    outputImages = gr.Gallery(label="Cropped Image Preview", preview=True, object_fit="cover", container=True)
 
-        for curr_iter, image in enumerate(images):
-            if len(image_locations) - prev_search >= searchLimit["imagecount"]*searchLimit["pagecount"] or len(image_locations) - temp_img_len >= searchLimit["imagecount"]:
-                break
-            image = image.find_element(By.XPATH, "." + "/" + "/a")
-            imageLink = image.find_elements(By.XPATH, ".//img")
-
-            if image.get_attribute("href").rsplit("/", 1)[-1] not in image_names:
-                checker = 0
-                if ai_mode == 1:
-                    try:
-                        # Dl the image thumbnail from the grid
-                        img_loc = thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
-
-                        if img_classifier(img_loc):
-                            print("AI Mode: I approve this image")
-                        else:
-                            print("AI Mode: Skipping this image")
-                            checker = 1
-                        os.remove(img_loc)
-                    except:
-                        checker = 1
-                if checker:
-                    continue
-
-                try:
+                    with gr.Row():
+                        green_btn = gr.Button(value="Crop Image", size='sm')
+                        green_btn.click(cropImages, [image,crop_scale_factor],outputs=outputImages)
+                        open_btn = gr.Button(value="Open 📁",variant='secondary', size='sm')
+                        open_btn.click(fn=open_folder, inputs=[folder_input,crop_scale_factor])
+        # Pixiv Tab
+        with gr.TabItem("Pixiv", id=1):
+            with gr.Row():
+                with gr.Column():
+                    searchQuery = gr.Textbox(label="Search Query", placeholder="Suggested to use the char's full name")
+                    with gr.Row():
+                        num_pics = gr.Slider(1,30, value=2, step=int, label="Number of Pictures")
+                    with gr.Row():
+                        num_pages = gr.Slider(1,50, value=1, step=int, label="Number of Pages")
+                    with gr.Row():
+                        with gr.Column():
+                            with gr.Row():
+                                searchTypes = gr.CheckboxGroup(["Premium Search","Freemium"], value=["Freemium"], label="Search Type", type="index", elem_id="pixiv")
+                            with gr.Row():
+                                viewRestriction = gr.CheckboxGroup(["PG","R-18"],label="Viewing Restriction (Default: Account Settings)",type="index",elem_id="viewing-restrictions")
+                        with gr.Row(elem_id='button-row'):
+                            green_btn = gr.Button(value="Search")
+                    with gr.Row():
+                        imageControl = gr.CheckboxGroup(["Full Res", "Continue Search","Search by Oldest", "AI Classifier"], value=["Full Res"], label="Image Control", type="index",elem_id="pixiv-filters")
+                    with gr.Row():
+                        with gr.Row():
+                            n_likes = gr.Number(value=0, label="Filter by Likes")
+                        with gr.Row():
+                            n_bookmarks = gr.Number(value=0, label="Filter by Bookmarks")
+                        with gr.Row():
+                            n_views = gr.Number(value=0, label="Filter by Views")
+                    with gr.Row():
+                            start_date = gr.Textbox(label="Start date", placeholder=("2016-01-22  YEAR-MONTH-DAY"))
+                    with gr.Row():
+                            end_date = gr.Textbox(label="End date", placeholder=("2022-09-22  YEAR-MONTH-DAY"))
+                    with gr.Row():
+                            user_name = gr.Textbox(label="Email", type="email")
+                    with gr.Row():
+                            pass_word = gr.Textbox(label="Password", type="password")
                     
-                    if sum(filters.values()) == 0 and len(imageLink):
-                        thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path,)
-                    else:
-                        driver, tempImg = tab_handler(driver=driver, image=image)
-                        WebDriverWait(driver, timeout=11).until(EC.presence_of_element_located((By.XPATH, '//*[@class="sc-1qpw8k9-1 jOmqKq"]')))
-                        tempDL = driver.find_element(By.XPATH, '//*[@class="sc-1qpw8k9-1 jOmqKq"]')
+                with gr.Column():
+                    gallery=gr.Gallery(label="Image Preview", preview=True, object_fit="cover", container=True, columns=5)
 
-                        fetchImageData = driver.find_elements(By.TAG_NAME, "dd")
-                        imagePopularity = parseImageData(
-                            filters=filters, Data=fetchImageData
-                        )
-                        time.sleep(1)
+                    with gr.Row():
+                        blue_btn = gr.Button(value="Crop Selected Image",variant='secondary')
+                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        open_btn = gr.Button(value="Open 📁",variant='secondary')
+                        open_btn.click(fn=open_folder, inputs=folder_input)
 
-                        if filterOptions(filters, imagePopularity=imagePopularity):
-                            tempDLLink = tempDL.get_attribute("src")
-
-                            # Dl the original rez image
-                            if ultimatium:
-                                tempDLLink = tempDLLink.replace(
-                                    "img-master", "img-original"
-                                ).replace("_master1200", "")
-
-                            download_image(imageLink=tempDLLink, exec_path=exec_path, driver=driver)
-                        else:
-                            print("\nImage filters not satisfied...")
-                        driver = tab_handler(driver=driver)
-                        time.sleep(0.3)
-                # In case of stale element or any other errors
-                except:
-                    if driver.window_handles[-1] != driver.window_handles[0]:
-                        print("\nI ran into an error, moving on...")
-                        driver = tab_handler(driver=driver)
-                    time.sleep(randint(1, 3) + randint(0, 9) / 10)
-                    continue
-
-            else:
-                print("\nImage already exists, moving to another image...")
-            save_Search(driver, mode=0)
-        if not valid_page(driver):
-            break
+            gallery.select(get_select_index, None, selected)
+            green_btn.click(pix_imgs, [searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
+                                    start_date,end_date, user_name, pass_word], outputs=gallery)
 
 
-def search_image_type(search_type, driver, search_param):
-    if search_type == 0:
-        return driver.find_elements(By.XPATH, search_param["premium_search"])
-    elif search_type == 1:
-        return driver.find_elements(By.XPATH, search_param["li_search"])
+        # Danbooru Tab
+        with gr.TabItem("Danbooru", id=2):
+            with gr.Row():
+                with gr.Column():
+                    searchQuery = gr.Textbox(label="Search Query", placeholder="Suggested to use the char's full name")
+                    with gr.Row():
+                        num_pics = gr.Slider(1,20, value=2, step=int, label="Number of Pictures")
+                    with gr.Row():
+                        num_pages = gr.Slider(1,50, value=1, step=int, label="Number of Pages")
+                    with gr.Row():
+                        filters = gr.CheckboxGroup(["Score", "Exact Match", "More PG", "Sensitive", "Strictly PG", "AI Classifier"], label="Filters", type="index", elem_id="filtering")
+                    with gr.Row():
+                        imageControl = gr.CheckboxGroup(["Continue Search"], label="Image Control", type="index", elem_id="imageControl")
+                    with gr.Row():
+                        bl_tags = gr.Textbox(label="Tags to Filter", placeholder=("Add stuff like typical undergarments etc to ensure complete pg friendliness"),lines=2)
+                    with gr.Row():
+                        inc_tags = gr.Textbox(label="Tags to Include", placeholder=("1girl, 1boy for profile pictures"))
+                    green_btn = gr.Button(value="Search")
+                
+                with gr.Column():
+                    gallery=gr.Gallery(label="Image Preview", preview=True, object_fit="cover", container=True, columns=5)
 
+                    with gr.Row():
+                        blue_btn = gr.Button(value="Crop Selected Image",variant='secondary')
+                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        open_btn = gr.Button(value="Open 📁",variant='secondary')
+                        open_btn.click(fn=open_folder, inputs=folder_input)
 
-def filterOptions(filters, imagePopularity):
-    for key in filters.keys():
-        if filters[key] > imagePopularity[key]:
-            return False
-    return True
+            gallery.select(get_select_index, None, selected)
+            green_btn.click(danb_imgs, [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl], outputs=gallery)
+            
+        
+        # Zerochan Tab
+        with gr.TabItem("Zerochan", id=3):
+            with gr.Row():
+                with gr.Column():
+                    searchQuery = gr.Textbox(label="Search Query", placeholder="Suggested to use the char's full name")
+                    with gr.Row():
+                        num_pics = gr.Slider(1,30, value=2, step=int, label="Number of Pictures")
+                    with gr.Row():
+                        num_pages = gr.Slider(1,50, value=1, step=int, label="Number of Pages")
+                    with gr.Row():
+                        with gr.Row():
+                            n_likes = gr.Number(value=0, label="Filter by Likes")
+                            with gr.Row():
+                                filters = gr.CheckboxGroup(["AI Classifier"], label="Filters", type="index",elem_id="zeroAIhover")
+                        with gr.Column():
+                            imageControl = gr.CheckboxGroup(["Continue Search"], label="Image Control", type="index", elem_id="imageControl")   
+                    green_btn = gr.Button(value="Search")
+                
+                with gr.Column():
+                    gallery=gr.Gallery(label="Image Preview", preview=True, object_fit="cover", container=True, columns=5)
+                    
+                    with gr.Row():
+                        blue_btn = gr.Button(value="Crop Selected Image",variant='secondary')
+                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        open_btn = gr.Button(value="Open 📁",variant='secondary')
+                        open_btn.click(fn=open_folder, inputs=folder_input)
 
+            gallery.select(get_select_index, None, selected)
+            green_btn.click(zero_imgs, [searchQuery, num_pics, num_pages, n_likes, filters,imageControl], outputs=gallery)
+ 
 
-def parseImageData(Data, filters):
-    parsedData = {}
-    for iter, key in enumerate(filters.keys()):
-        parsedData[key] = int(Data[iter].text.replace(",", ""))
-    return parsedData
-
-
-def valid_page(driver):
-    cur_url = driver.current_url
-    try:
-        next_page = (
-            driver.find_element(By.XPATH, '//*[@class="sc-xhhh7v-0 kYtoqc"]')
-            .find_elements(By.TAG_NAME, "a")[-1]
-            .get_attribute("href")
-        )
-        if cur_url == next_page:
-            return 0
-        if next_page:
-            driver.get(next_page)
-        return 1
-    except:
-        return 0
-
-
-def date_handler(sel_date):
-    temp = sel_date.split("-")
-    try:
-        datetime(int(temp[0]), int(temp[1]), int(temp[2]))
-    except ValueError:
-        return 0
-    return 1
-
-
-def login_handler(driver, exec_path, user_name, pass_word):
-    time.sleep(5)
-    login_btn = driver.find_elements(By.XPATH, "//*[@class='sc-oh3a2p-4 gHKmNu']//a")[1]
-    login_btn.click()
-
-    WebDriverWait(driver, timeout=11).until(
-        EC.presence_of_element_located((By.XPATH, "//*[@class='sc-2o1uwj-0 elngKN']"))
-    )
-    user_btn = driver.find_element(
-        By.XPATH, "//*[@class='sc-2o1uwj-0 elngKN']"
-    ).find_elements(By.TAG_NAME, "fieldset")
-    user_btn[0]
-
-    actions = ActionChains(driver)
-    actions.click(user_btn[0]).send_keys(user_name).perform()
-    time.sleep(0.5)
-    actions.click(user_btn[1]).send_keys(pass_word).perform()
-    # driver.find_element(
-    #     By.XPATH,
-    #     "//*[@class='sc-bdnxRM jvCTkj sc-dlnjwi klNrDe sc-2o1uwj-7 fguACh sc-2o1uwj-7 fguACh']",
-    # ).click()
-
-    # New login Button
-    driver.find_element(
-        By.XPATH,'/html/body/div[2]/div/div[3]/div[1]/div[2]/div/div/div/form/button',
-    ).click()
-
-    return True
-
-
-def awaitPageLoad(driver, searchLimit, search_param, search_type):
-    # Waits on the page to load (for popular or freemium)
-    if searchLimit["imagecount"] == 99:
-        try:
-            WebDriverWait(driver, timeout=12).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, search_param["premium_search"])
-                )
-            )
-            print("Premium section found, searching for images...")
-        except:
-            print("No popular section")
-            search_type = -1
-            return search_type
-    else:
-        try:
-            WebDriverWait(driver, timeout=12).until(
-                EC.presence_of_element_located((By.XPATH, search_param["li_search"]))
-            )
-            print("\nFreemium section found, searching for images...")
-        except:
-            driver.refresh()
-            time.sleep(12)
-        if not driver.find_elements(By.XPATH, search_param["li_search"]):
-            return
-        search_type = 1
-    return search_type
-
-
-def image_type(imageLink, mode=0):
-    # Dl the image thumbnail from the grid
-    imageLink = imageLink[0].get_attribute("src")
-    if mode:
-        imageLink = re.sub(r"c/.*?/.*?/", "img-master/", imageLink)
-        imageLink = imageLink.replace("square", "master").replace("custom", "master")
-        # Dl the original rez image
-        if ultimatium:
-            imageLink = imageLink.replace("img-master", "img-original").replace(
-                "_master1200", ""
-            )
-
-    return imageLink
-
-
-def download_image(imageLink, exec_path, driver, mode=1):
-    tempDLName = imageLink.rsplit("/", 1)[-1]
-    img_loc = f"./{exec_path.folder_path}/{tempDLName}"
-    if not ultimatium or not mode:
-        installUrlOpeners(driver=driver,mode=0)
-    else:
-        installUrlOpeners(imageLink)
-    try:
-        requestUrlretrieve(imageLink=imageLink, img_loc=img_loc)
-    except:
-        imageLink = imageLink.rsplit(".",1)[0]+".png"
-        requestUrlretrieve(imageLink, img_loc=img_loc)
-    
-    print(f"\n{imageLink}")
-    if mode:
-        image_locations.append(f"./{exec_path.folder_path}/{tempDLName}")
-        image_names.append(f"{tempDLName.split('.')[0]}")
-    else:
-        return img_loc
-
-
-def installUrlOpeners(driver,mode=1):
-    if ultimatium and mode:
-        urllib.request.install_opener(create_url_headers(driver))
-    else:
-        urllib.request.install_opener(create_url_headers(driver.current_url))
-
-
-def requestUrlretrieve(imageLink, img_loc):
-    urllib.request.urlretrieve(imageLink, img_loc)
-
-
-def thumbnailDownloader(imageLink, image, driver, exec_path, mode=1):
-    imageLink = image_type(imageLink=imageLink, mode=mode)
-
-    action = ActionChains(driver=driver)
-    action.move_to_element(image.find_element(By.XPATH, ".//img")).perform()
-
-    return download_image(imageLink=imageLink, exec_path=exec_path, driver=driver, mode=mode)
+demo.launch()
