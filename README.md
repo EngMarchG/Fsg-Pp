@@ -9,7 +9,7 @@ Well, Fsg_Pp aims to automate that for you!
 Just type what you want to find and it will filter out the best ones for you!  
 [<img src="/../public/assets/images/finally.png" width="350" />](/../public/assets/images/finally.png)
 
-Fixes coming soon!™
+Sites update coming soon!™
 
 ## Quick Links
 - [Installing and Running](#installing-and-running)
