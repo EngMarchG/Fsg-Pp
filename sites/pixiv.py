@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 import time
 import urllib.request
 import os
@@ -42,8 +45,8 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
 
     # Will use those if not logged in
     bar_search = '//input[@placeholder="Search works"]'
-    li_search = "//*[@class='sc-l7cibp-1 krFoBL']//*[@class='sc-iasfms-3 jDiQFZ']"
-    premium_search = "//*[@class='sc-jgyytr-0 sc-4dn824-3 buukZm']//*[@class='sc-l7cibp-2 hDVsA-D']"
+    li_search = "//*[@class='sc-l7cibp-1 krFoBL']//li"
+    premium_search = "//*[@class='sc-l7cibp-1 krFoBL']//*[@class='sc-l7cibp-2 hDVsA-D']"
     search_param = {
         "bar_search": bar_search,
         "li_search": li_search,
@@ -80,6 +83,14 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         searchQuery(user_search, driver, search_param["bar_search"], isLoggedIn=success_login)
     time.sleep(2)
 
+    if start_date and not success_login:
+        driver.get(driver.current_url + f"?scd={start_date}&ecd={end_date}")
+        time.sleep(2)
+    elif start_date and success_login:
+        cur_url = driver.current_url.split("?")
+        driver.get(cur_url[0] + f"?scd={start_date}&ecd={end_date}&" + cur_url[1])
+        time.sleep(2)
+
     premiumSearch = 1 if 0 in searchTypes else 0
     freemiumSearch = 1 if 1 in searchTypes else 0
     pg_friendly = 1 if 0 in viewRestriction else 0
@@ -96,9 +107,8 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         search_image(driver, exec_path, filters, search_param)
 
     if not success_login:
-        if 1 not in imageControl:
-            # Click view all
-            driver.find_element(By.XPATH, '//*[@class="sc-s46o24-0 eiIrqZ"]').click()
+        # Click view all
+        driver.find_element(By.XPATH, '//*[@class="sc-d98f2c-0 sc-s46o24-1 dAXqaU"]').click()
     else:
         # Click illustrations only (since no need for view all)
         try:
@@ -108,15 +118,9 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
 
             mode = ""
             order = ""
-            
-            if driver.current_url.find("s_mode=s_tag") == -1:
-                print("You cannot continue search from a non-log in url...")
-                return []
-            
-            cur_url = driver.current_url.split("?")
+
             if pg_friendly == 1 and r_18 == 1:
                 print("PG Friendly and r-18")
-                cur_url[1] = re.sub(r'mode=(safe|r18)&', '', cur_url[1])
                 pass
             elif pg_friendly == 1:
                 mode = "mode=safe&"
@@ -127,19 +131,9 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
             if order_by_oldest == 1:
                 order = "order=date&"
                 print("Order by oldest")
-            
-            
-            if start_date:
-                if cur_url[1].find("scd") != 0:
-                    cur_url_temp = cur_url[-1].split("&")
-                    cur_url = [cur_url[0]]
-                    cur_url.append(cur_url_temp[-1])
 
-            if not start_date:
-                driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
-            else:
-                print("Start date: " + start_date + " End date: " + end_date)
-                driver.get(cur_url[0] + f"?{order}{mode}scd={start_date}&ecd={end_date}&" + cur_url[1])
+            cur_url = driver.current_url.split("?")
+            driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
         except:
             pass
     
@@ -167,11 +161,11 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
     for page in range(searchLimit["pagecount"]):
         
         temp_img_len = len(image_locations)
-        try:
-            WebDriverWait(driver, timeout=9).until(EC.presence_of_element_located((By.XPATH, search_param["li_search"] + "//a")))
-        except:
-            driver.refresh()
-            WebDriverWait(driver, timeout=15).until(EC.presence_of_element_located((By.XPATH, search_param["li_search"] + "//a")))
+        WebDriverWait(driver, timeout=9).until(
+            EC.presence_of_element_located(
+                (By.XPATH, search_param["li_search"] + "//a")
+            )
+        )  # Added //a
         images = search_image_type(search_type, driver, search_param=search_param)
 
         for curr_iter, image in enumerate(images):

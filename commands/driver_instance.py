@@ -1,10 +1,9 @@
-from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 import urllib.request
 import os
 import logging
 
-def create_driver(exec_path, profile=0):
+def create_driver(profile=0):
     # Options to make it more human-like
     options = webdriver.ChromeOptions()
     options.add_argument("start-maximized")
@@ -36,8 +35,7 @@ def create_driver(exec_path, profile=0):
     selenium_logger = logging.getLogger('selenium')
     selenium_logger.setLevel(logging.ERROR)
 
-    service = Service(executable_path=exec_path)
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = webdriver.Chrome(options=options)
     return driver
 
 def create_url_headers(tempImg):
