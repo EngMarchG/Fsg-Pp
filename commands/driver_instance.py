@@ -15,26 +15,32 @@ def create_driver(profile=0):
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
-    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36")
-    options.add_argument("--log-level=3")
+
+    # May be required to change this later on
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36")
 
 
     user_data_dir = os.path.abspath(os.getcwd())+"/commands/profile"
     if profile:
         options.add_argument(f"user-data-dir={user_data_dir}")
     prefs = {"credentials_enable_service": False,
-     "profile.password_manager_enabled": False}
+             "profile.password_manager_enabled": False}
     options.add_experimental_option("prefs", prefs)
     options.add_argument("--headless")
+
     # to supress the error messages/logs?
+    options.add_argument("--log-level=3")
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    #  options.page_load_strategy = 'normal' #eager #none #normal
+    
+    # Not recommended to change from default value (decides how the page is loaded)
+    options.page_load_strategy = 'normal' 
 
     # Remove logs from console
     selenium_logger = logging.getLogger('selenium')
     selenium_logger.setLevel(logging.ERROR)
 
+    # Create driver instance (using service is not required)
     driver = webdriver.Chrome(options=options)
     return driver
 

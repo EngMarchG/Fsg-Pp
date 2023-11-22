@@ -43,7 +43,7 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     else:
         driver.get(link)
 
-    # Will use those if not logged in
+    # Will use those when not logged in
     bar_search = '//input[@placeholder="Search works"]'
     li_search = "//*[@class='sc-l7cibp-1 krFoBL']//li"
     premium_search = "//*[@class='sc-l7cibp-1 krFoBL']//*[@class='sc-l7cibp-2 hDVsA-D']"

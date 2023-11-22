@@ -73,6 +73,7 @@ with gr.Blocks(css='style.css') as demo:
                         green_btn.click(cropImages, [image,crop_scale_factor],outputs=outputImages)
                         open_btn = gr.Button(value="Open 📁",variant='secondary', size='sm')
                         open_btn.click(fn=open_folder, inputs=[folder_input,crop_scale_factor])
+
         # Pixiv Tab
         with gr.TabItem("Pixiv", id=1):
             with gr.Row():
