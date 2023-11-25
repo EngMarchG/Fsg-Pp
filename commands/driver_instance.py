@@ -44,12 +44,14 @@ def create_driver(profile=0):
     driver = webdriver.Chrome(options=options)
     return driver
 
-def create_url_headers(tempImg):
+def create_url_headers(tempImg, site=0):
     opener = urllib.request.build_opener()
+    if not site:
+        site = tempImg
     opener.addheaders = [
             ('Accept', 'application/json, text/javascript, */*; q=0.01'),
             ('X-Requested-With', 'XMLHttpRequest'),
-            ('Referer', f'{tempImg}'),
+            ('Referer', f'{site}'),
             ('Host', f'https//{tempImg.split("/")[2]}'),
             ('Content-Type', 'application/json; charset=UTF-8'),
             ('Connection', 'keep-alive'),

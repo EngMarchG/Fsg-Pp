@@ -25,7 +25,7 @@ def img_classifier(image, classifer_type=0):
         img_class = model(img_loc, verbose=False)
 
         # If the first index is higher than the second index, the image is classified as "good"
-        if img_class[0].probs[0] < img_class[0].probs[1]:
+        if img_class[0].probs.data[0] < img_class[0].probs.data[1]:
             
             # Save the image in the classified directory
             if classifer_type:
