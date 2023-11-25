@@ -108,7 +108,9 @@ This app currently allows you to search for images using three sites:
 - Continue on the previous page it ended or if it crashes (Ignores current query when checked)  
 >**Note:** It is better to make the query specific such as using the character's full name. Ex: Searching 'Honkai' would fail due to the existance of several similar names. Searching 'Honkai star rail', on the other hand, would work since it is more specific and wouldn't get mixed up with other names.
 
-
+## Yandex
+![Yandex PNG](/../public/assets/images/yandex.png)
+- Filter by Image orientation and recent upload date (up to past 7 days)
  
 ## Manual Installation
    
