@@ -9,6 +9,7 @@ from ai.autocrop import autoCropImages
 from sites.pixiv import getOrderedPixivImages
 from sites.danbooru import getOrderedDanbooruImages
 from sites.zerochan import getOrderedZerochanImages
+from sites.yandex import getOrderedYandexImages
 
 def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
              start_date, end_date, user_name, pass_word):
@@ -30,6 +31,13 @@ def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
     global imgz
     driver = driver_instance.create_driver()
     imgz = getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl)
+    print(imgz)
+    return imgz if imgz else []
+
+def yandex_imgs(searchQuery, num_pics, filters,imageOrientation):
+    global imgz
+    driver = driver_instance.create_driver()
+    imgz = getOrderedYandexImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, filters=filters,imageOrientation=imageOrientation)
     print(imgz)
     return imgz if imgz else []
 
@@ -184,6 +192,31 @@ with gr.Blocks(css='style.css') as demo:
 
             gallery.select(get_select_index, None, selected)
             green_btn.click(zero_imgs, [searchQuery, num_pics, num_pages, n_likes, filters,imageControl], outputs=gallery)
+    # Yandex Tab
+        with gr.TabItem("Yandex", id=4):
+            with gr.Row():
+                with gr.Column():
+                    searchQuery = gr.Textbox(label="Search Query", placeholder="Suggested to use the char's full name")
+                    with gr.Row():
+                        num_pics = gr.Slider(1,30, value=2, step=int, label="Number of Pictures")
+                    with gr.Row():
+                        with gr.Row():
+                                filters = gr.CheckboxGroup(["AI Classifier","Search By Recent"], label="Filters", type="index",elem_id="zeroAIhover")
+                        with gr.Column():
+                            imageOrientation = gr.Radio(["Landscape","Portrait","Square"], label="Image Orientation", type="index", elem_id="imageControl")   
+                    green_btn = gr.Button(value="Search")
+                
+                with gr.Column():
+                    gallery=gr.Gallery(label="Image Preview", preview=True, object_fit="cover", container=True, columns=5)
+                    
+                    with gr.Row():
+                        blue_btn = gr.Button(value="Crop Selected Image",variant='secondary')
+                        blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+                        open_btn = gr.Button(value="Open 📁",variant='secondary')
+                        open_btn.click(fn=open_folder, inputs=folder_input)
+
+            gallery.select(get_select_index, None, selected)
+            green_btn.click(yandex_imgs, [searchQuery, num_pics, filters,imageOrientation], outputs=gallery)
  
 
 demo.launch()
