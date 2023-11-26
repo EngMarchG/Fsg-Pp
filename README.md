@@ -1,6 +1,6 @@
 # Fsg_Pp
 
-Finally some good profile pictures! [Available on Hugging Spaces for Preview Purposes Only](https://huggingface.co/spaces/Kyo-Kai/Fsg-Pp)
+Finally some good profile pictures!
 
 Got tired of constantly searching for new profile pictures?
 Or maybe even just the thought of changing it is a hassle.
@@ -8,8 +8,6 @@ Or maybe even just the thought of changing it is a hassle.
 Well, Fsg_Pp aims to automate that for you!
 Just type what you want to find and it will filter out the best ones for you!  
 [<img src="/../public/assets/images/finally.png" width="350" />](/../public/assets/images/finally.png)
-
-Sites update coming soon!™
 
 ## Quick Links
 - [Installing and Running](#installing-and-running)
@@ -108,7 +106,9 @@ This app currently allows you to search for images using three sites:
 - Continue on the previous page it ended or if it crashes (Ignores current query when checked)  
 >**Note:** It is better to make the query specific such as using the character's full name. Ex: Searching 'Honkai' would fail due to the existance of several similar names. Searching 'Honkai star rail', on the other hand, would work since it is more specific and wouldn't get mixed up with other names.
 
-
+## Yandex
+![Yandex PNG](/../public/assets/images/yandex.png)
+- Filter by Image orientation and recent upload date (up to past 7 days)
  
 ## Manual Installation
    
