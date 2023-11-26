@@ -68,10 +68,10 @@ def grid_search(driver, num_pics, exec_path, user_search):
 
             if (imageLink.rsplit("/",1)[-1].encode("ascii", "ignore")
                 .decode("ascii")) in image_names:
-                print("\nImage already exists, moving to another image...")
+                print("Image already exists, moving to another image...\n")
                 continue
         except:
-            print("\nI ran into an error finding the image, closing the tab and moving on...")
+            print("I ran into an error finding the image, closing the tab and moving on...\n")
             time.sleep(randint(0, 1) + randint(0, 9) / 10)
             continue
         
@@ -86,7 +86,7 @@ def grid_search(driver, num_pics, exec_path, user_search):
             checker = ai_dl(image, exec_path, driver, user_search, site="https://yandex.com/")
         except:
             time.sleep(randint(0, 1) + randint(0, 9) / 10)
-            print("\nAI mode failed to check the image, skipping...")
+            print("AI mode failed to check the image, skipping...\n")
             continue
         
         # Download the image
@@ -98,7 +98,7 @@ def grid_search(driver, num_pics, exec_path, user_search):
                 user_search=user_search,
             )
         except: # TODO: Use the same exception handling as above to try and redownload the image
-            print("\nI ran into an error downloading, closing the tab and moving on...")
+            print("I ran into an error downloading, closing the tab and moving on...\n")
             time.sleep(randint(0, 1) + randint(0, 9) / 10)
 
 
@@ -130,7 +130,7 @@ def download_image(exec_path, driver, image, user_search, mode=1, site=0):
     urllib.request.urlretrieve(tempDLAttr, img_loc)
 
     if mode:
-        print(f"\n{tempDLAttr}")
+        print(f"{tempDLAttr}\n")
         image_locations.append(img_loc)
         image_names.append(f"{tempDLName.split('.')[0]}")
     return img_loc
@@ -159,7 +159,7 @@ def ai_dl(image, exec_path, driver, user_search, site=""):
     if img_classifier(image_loc):
         print("AI Mode: I approve this image")
     else:
-        print("AI Mode: Skipping this image")
+        print("AI Mode: Skipping this image\n")
         checker = 1
     os.remove(image_loc)
     return checker
