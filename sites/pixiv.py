@@ -180,21 +180,7 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
             imageLink = image.find_elements(By.XPATH, ".//img")
 
             if image.get_attribute("href").rsplit("/", 1)[-1] not in image_names:
-                checker = 0
-                if ai_mode == 1:
-                    try:
-                        # Dl the image thumbnail from the grid
-                        img_loc = thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
-
-                        if img_classifier(img_loc):
-                            print("AI Mode: I approve this image")
-                        else:
-                            print("AI Mode: Skipping this image")
-                            checker = 1
-                        os.remove(img_loc)
-                    except:
-                        checker = 1
-                if checker:
+                if ai_mode == 1 and process_ai_mode(imageLink, image, driver, exec_path):
                     continue
 
                 try:
@@ -206,9 +192,8 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
                         WebDriverWait(driver, timeout=11).until(EC.presence_of_element_located((By.XPATH, "//div[@role='presentation']")))
                         tempDL = driver.find_element(By.XPATH, "//div[@role='presentation']//img")
 
-                        fetchImageData = driver.find_elements(By.TAG_NAME, "dd")
-                        imagePopularity = parseImageData(
-                            filters=filters, Data=fetchImageData)
+                        imagePopularity = parseImageData(filters=filters, 
+                                                         Data=driver.find_elements(By.TAG_NAME, "dd"))
                         time.sleep(1)
 
                         if filterOptions(filters, imagePopularity=imagePopularity): # Check if image filters are satisfied
@@ -216,8 +201,7 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
 
                             # Dl the original rez image
                             if ultimatium:
-                                tempDLLink = tempDLLink.replace(
-                                    "img-master", "img-original"
+                                tempDLLink = tempDLLink.replace("img-master", "img-original"
                                 ).replace("_master1200", "")
 
                             download_image(imageLink=tempDLLink, exec_path=exec_path, driver=driver)
@@ -396,3 +380,19 @@ def date_handler(sel_date):
     except ValueError:
         return 0
     return 1
+
+
+def process_ai_mode(imageLink, image, driver, exec_path):
+    try:
+        # Dl the image thumbnail from the grid
+        img_loc = thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
+
+        if img_classifier(img_loc):
+            print("AI Mode: I approve this image")
+            return False
+        else:
+            print("AI Mode: Skipping this image")
+            return True
+        os.remove(img_loc)
+    except:
+        return True
