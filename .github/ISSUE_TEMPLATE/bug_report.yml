@@ -1,0 +1,28 @@
+name: Bug report
+description: Create a report to help us improve
+labels: [bug]
+
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version/Commit hash
+      description: The version or commit hash you're using.
+      placeholder: e.g. v1.0.0, 7e1b7f
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: Briefly describe the bug or error you're experiencing.
+      placeholder: When I do X, Y happens instead of Z.
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-comments
+    attributes:
+      label: Additional Comments
+      description: Add any other context or screenshots about the bug here.
