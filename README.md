@@ -1,5 +1,19 @@
-# Fsg_Pp
+<p align="center">
+  <a href="https://github.com/EngMarchG/Fsg-Pp/stargazers">
+    <img alt="GitHub stars" src="https://img.shields.io/github/stars/EngMarchG/Fsg-Pp?style=flat&color=blue">
+  </a>
+  <a href="https://github.com/EngMarchG/Fsg-Pp/issues">
+    <img alt="GitHub issues" src="https://img.shields.io/github/issues/EngMarchG/Fsg-Pp">
+  </a>
+  <a href="https://github.com/EngMarchG/Fsg-Pp/issues?q=is%3Aissue+is%3Aclosed">
+    <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/EngMarchG/Fsg-Pp">
+  </a>
+  <a href="https://github.com/EngMarchG/Fsg-Pp/blob/main/LICENSE">
+    <img alt="GitHub license" src="https://img.shields.io/github/license/EngMarchG/Fsg-Pp">
+  </a>
+</p>
 
+# Introduction
 Finally some good profile pictures! [Hugging spaces, for testing purposes only.](https://huggingface.co/spaces/Kyo-Kai/Fsg-pp-online)
 
 Got tired of constantly searching for new profile pictures?
