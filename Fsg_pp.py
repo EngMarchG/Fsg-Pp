@@ -11,27 +11,48 @@ from sites.danbooru import getOrderedDanbooruImages
 from sites.zerochan import getOrderedZerochanImages
 from sites.yandex import getOrderedYandexImages
 
-imageIndex = 0
-imgz = []
+
+class ImageGallery:
+    def __init__(self):
+        self.imgz = []
+        self.selected = 0
+
+    def return_images(self, image_locs):
+        self.imgz = image_locs
+        print(self.imgz)
+        return self.imgz if self.imgz else []
+
+    def get_select_index(self, evt: gr.SelectData):
+        self.selected = evt.index
+        return self.selected
+
+    def send_number(self): 
+        return self.imgz[int(self.selected)], gr.Tabs(selected=0)
+
+# Create an instance of ImageGallery for each tab
+pixiv_gallery = ImageGallery()
+danbooru_gallery = ImageGallery()
+zerochan_gallery = ImageGallery()
+yandex_gallery = ImageGallery()
 
 # Helper functions
 def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
              start_date, end_date, user_name, pass_word):
     driver = driver_instance.create_driver(profile=1)
-    return return_image(getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
+    return pixiv_gallery.return_images(getOrderedPixivImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages,searchTypes=searchTypes,viewRestriction=viewRestriction,imageControl=imageControl, n_likes=n_likes, n_bookmarks=n_bookmarks,
                                 n_views=n_views, start_date=start_date,end_date=end_date, user_name=user_name, pass_word=pass_word))
 
 def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
     driver = driver_instance.create_driver()
-    return return_image(getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path,imageControl=imageControl))
+    return danbooru_gallery.return_images(getOrderedDanbooruImages(driver=driver, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, filters=filters, bl_tags=bl_tags, inc_tags=inc_tags, exec_path=exec_path,imageControl=imageControl))
 
 def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
     driver = driver_instance.create_driver()
-    return return_image(getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl))
+    return zerochan_gallery.return_images(getOrderedZerochanImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, num_pages=num_pages, n_likes=n_likes, filters=filters,imageControl=imageControl))
 
 def yandex_imgs(searchQuery, num_pics, filters,imageOrientation):
     driver = driver_instance.create_driver()
-    return return_image(getOrderedYandexImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, filters=filters,imageOrientation=imageOrientation))
+    return yandex_gallery.return_images(getOrderedYandexImages(driver=driver, exec_path=exec_path, user_search=searchQuery, num_pics=num_pics, filters=filters,imageOrientation=imageOrientation))
 
 
 # Feature Functions
@@ -41,41 +62,26 @@ def open_folder(folder_path, mode=0):
         folder_opened = os.path.abspath(os.path.join(folder_path, "cropped"))
     os.system(f'open "{folder_opened}"' if os.name == 'posix' else f'explorer "{folder_opened}"')
 
-def return_image(image_locs):
-    global imgz
-    imgz = image_locs
-    print(imgz)
-    return imgz if imgz else []
-
-def get_select_index(evt: gr.SelectData):
-    imageIndex=evt.index
-    return evt.index
-
-def send_number(indx): 
-    imageIndex = indx
-    return imgz[int(imageIndex)], gr.Tabs(selected=0)
-
 def cropImages(image,crop_scale_factor):
     return autoCropImages(image,crop_scale_factor)
 
-def create_gallery_tab(tab_name, search_fn, search_inputs):
+def create_gallery_tab(tab_name, search_fn, search_inputs, gallery_instance, fn_on_click):
     with gr.Column():
         gallery=gr.Gallery(label="Image Preview", preview=True, object_fit="cover", container=True, columns=5)
 
         with gr.Row():
-            blue_btn = gr.Button(value="Crop Selected Image",variant='secondary')
-            blue_btn.click(fn=send_number,inputs=selected,outputs=[image,tabs])
+            crop_btn = gr.Button(value="Crop Selected Image",variant='secondary')
+            crop_btn.click(fn=fn_on_click, outputs=[image,tabs])
             open_btn = gr.Button(value="Open 📁",variant='secondary')
             open_btn.click(fn=open_folder, inputs=folder_input)
 
-    gallery.select(get_select_index, None, selected)
+    gallery.select(gallery_instance.get_select_index, None)
     green_btn.click(search_fn, search_inputs, outputs=gallery)
 
 
 # Main Layout of the GUI
 with gr.Blocks(css='style.css') as demo:
     with gr.Tabs(selected=1) as tabs:
-        selected = gr.Number(label="Gallery Number",visible=False)
         folder_input = gr.Textbox(value="./Images/", label="Enter Folder Path", visible=False)
         
         # Automatic Crop Tab
@@ -130,7 +136,7 @@ with gr.Blocks(css='style.css') as demo:
                     
                 pixiv_inputs = [searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
                                 start_date,end_date, user_name, pass_word]
-                create_gallery_tab("Pixiv", pix_imgs, pixiv_inputs)
+                create_gallery_tab("Pixiv", pix_imgs, pixiv_inputs, pixiv_gallery, pixiv_gallery.send_number)
 
 
         # Danbooru Tab
@@ -153,7 +159,7 @@ with gr.Blocks(css='style.css') as demo:
                     green_btn = gr.Button(value="Search")
             
                 danbooru_inputs = [searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl]
-                create_gallery_tab("Danbooru", danb_imgs, danbooru_inputs)
+                create_gallery_tab("Danbooru", danb_imgs, danbooru_inputs, danbooru_gallery, danbooru_gallery.send_number)
             
         
         # Zerochan Tab
@@ -176,7 +182,7 @@ with gr.Blocks(css='style.css') as demo:
                 
                 with gr.Column():
                     zerochan_inputs = [searchQuery, num_pics, num_pages, n_likes, filters,imageControl]
-                    create_gallery_tab("Zerochan", zero_imgs, zerochan_inputs)
+                    create_gallery_tab("Zerochan", zero_imgs, zerochan_inputs, zerochan_gallery, zerochan_gallery.send_number)
 
 
     # Yandex Tab
@@ -194,7 +200,7 @@ with gr.Blocks(css='style.css') as demo:
                     green_btn = gr.Button(value="Search")
                 
                 yandex_inputs = [searchQuery, num_pics, filters,imageOrientation]
-                create_gallery_tab("Yandex", yandex_imgs, yandex_inputs)
+                create_gallery_tab("Yandex", yandex_imgs, yandex_inputs, yandex_gallery, yandex_gallery.send_number)
 
 
 
