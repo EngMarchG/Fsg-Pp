@@ -1,6 +1,6 @@
 # Fsg_Pp
 
-Finally some good profile pictures!
+Finally some good profile pictures! [Hugging spaces, for testing purposes only.](https://huggingface.co/spaces/Kyo-Kai/Fsg-pp-online)
 
 Got tired of constantly searching for new profile pictures?
 Or maybe even just the thought of changing it is a hassle.
