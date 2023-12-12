@@ -23,9 +23,7 @@ Well, Fsg_Pp aims to automate that for you!
 Just type what you want to find and it will filter out the best ones for you!  
 [<img src="/../public/assets/images/finally.png" width="350" />](/../public/assets/images/finally.png)
 
-**Long awaited gallery isolation for each search tab is released!**
-
-__May add the ability to search through multiple tabs simultaneously (asynchronous)__
+**Long awaited gallery isolation and asynchronous search between tabs is released!**
 
 ## Quick Links
 - [Installing and Running](#installing-and-running)
