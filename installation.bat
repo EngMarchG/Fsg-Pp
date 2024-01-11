@@ -112,10 +112,10 @@ if /i "%choice%"=="y" (
     REM Install PyTorch with GPU support
     echo Running %PYTHON_CMD% script...
     venv\Scripts\pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
-    venv\Scripts\pip install ultralytics
+    venv\Scripts\pip install ultralytics==8.0.228
 ) else (
     REM Install Ultralytics using pip
-    venv\Scripts\pip install ultralytics
+    venv\Scripts\pip install ultralytics==8.0.228
 )
 
 REM Check if cv_files folder exists, create if it doesn't
