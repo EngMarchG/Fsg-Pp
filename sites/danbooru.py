@@ -203,7 +203,6 @@ def download_image(exec_path, driver, image=0):
     print(f"\n{tempDLAttr.split('?')[0]}")
     
     img_loc = f"./{exec_path.folder_path}/{tempDLName}"
-    urllib.request.install_opener(create_url_headers(driver.current_url))
     urllib.request.urlretrieve(
                     tempDLAttr, f"./{exec_path.folder_path}/{tempDLName}"
                 )
