@@ -1,6 +1,8 @@
 import time
 import urllib.request
 import os
+import aiohttp
+import asyncio
 from random import randint
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -11,7 +13,7 @@ from commands.exec_path import imgList
 from commands.universal import searchQuery, save_Search, continue_Search, contains_works
 from ai.classifying_ai import img_classifier
 
-def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, filters, bl_tags, inc_tags, exec_path, imageControl):
+async def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, filters, bl_tags, inc_tags, exec_path, imageControl):
     global image_locations, bl_tags_list, inc_tags_list, image_names, ai_mode,rating_filters
     image_names = imgList(mode=0)
     image_locations = []
@@ -56,7 +58,7 @@ def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, filters, 
 
     curr_page = driver.current_url
     while len(image_locations) < num_pics*num_pages:
-        pages_to_search(driver, num_pages, num_pics, exec_path)
+        await pages_to_search(driver, num_pages, num_pics, exec_path)
         if curr_page == driver.current_url and len(image_locations) < num_pics*num_pages:
             print("Reached end of search results")
             break
@@ -70,19 +72,19 @@ def filter_score(score):
         return " order:score"
     return ""
 
-def pages_to_search(driver, num_pages, num_pics, exec_path):
+async def pages_to_search(driver, num_pages, num_pics, exec_path):
     for i in range(num_pages):
         WebDriverWait(driver, timeout=11).until(EC.presence_of_element_located((By.XPATH, '//*[@class="posts-container gap-2"]')))
         # Selects the picture grids
         images = driver.find_element(
             By.XPATH, '//*[@class="posts-container gap-2"]'
         ).find_elements(By.CLASS_NAME, "post-preview-link")
-        grid_search(driver, num_pics, images, exec_path, num_pages)
+        await grid_search(driver, num_pics, images, exec_path, num_pages)
         save_Search(driver, mode=1)
         if not valid_page(driver) or len(image_locations) >= num_pics*num_pages:
             break
 
-def grid_search(driver, num_pics, images, exec_path, num_pages):
+async def grid_search(driver, num_pics, images, exec_path, num_pages):
     temp_img_len = len(image_locations)
     for n_iter, image in enumerate(images):
         if len(image_locations) >= num_pics*num_pages or len(image_locations) - temp_img_len >= num_pics:
@@ -102,7 +104,7 @@ def grid_search(driver, num_pics, images, exec_path, num_pages):
                 
                 if ai_mode:
                     checker = 0
-                    image_loc = download_image(exec_path=exec_path, driver=driver, image=image)
+                    image_loc = await download_image(exec_path=exec_path, driver=driver, image=image)
                     if img_classifier(image_loc):
                         print("AI Mode: I approve this image")
                     else:
@@ -114,7 +116,7 @@ def grid_search(driver, num_pics, images, exec_path, num_pages):
 
                 driver, tempImg = tab_handler(driver=driver,image=image)
                 WebDriverWait(driver, timeout=15).until(EC.presence_of_element_located((By.XPATH, '//*[@id="post-option-download"]/a')))
-                download_image(exec_path=exec_path, driver=driver)
+                await download_image(exec_path=exec_path, driver=driver)
                 driver = tab_handler(driver=driver)
 
             else:
@@ -192,7 +194,7 @@ def pg_strict():
                             "covered_nipples", "thigh_focus", "thighs", "bikini", "swimsuit", "grabbing_another's_breast", "huge_breasts", 
                             "foot_focus", "licking_foot", "foot_worship", "shirt_lift","clothes_lift", "underwear", "panties_under_pantyhose"]
 
-def download_image(exec_path, driver, image=0):
+async def download_image(exec_path, driver, image=0):
     if not image:
         tempDL = driver.find_element(By.XPATH, '//*[@id="post-option-download"]/a')
         tempDLAttr = tempDL.get_attribute("href")
@@ -203,8 +205,16 @@ def download_image(exec_path, driver, image=0):
     print(f"\n{tempDLAttr.split('?')[0]}")
     
     img_loc = f"./{exec_path.folder_path}/{tempDLName}"
-    urllib.request.urlretrieve(tempDLAttr, img_loc)
     
+    async with aiohttp.ClientSession() as session:
+        async with session.get(tempDLAttr) as resp:
+            with open(img_loc, 'wb') as fd:
+                while True:
+                    chunk = await resp.content.read(1024)
+                    if not chunk:
+                        break
+                    fd.write(chunk)
+
     if not image:
         image_locations.append(img_loc)
         image_names.append(f"{tempDLName.split('.')[0]}")

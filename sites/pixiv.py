@@ -44,9 +44,9 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         driver.get(link)
 
     # Will use those when not logged in
-    bar_search = '//input[@placeholder="Search works"]'
-    li_search = "//h3[contains(text(), 'Works') or contains(text(), 'Illustrations and Manga') or contains(text(), 'Illustrations')]/ancestor::section[1]/div[2]//li"
-    premium_search = "//h3[contains(text(), 'Popular works')]/ancestor::section[1]/div[2]//li"
+    bar_search = generate_xpath_query("//input", "@placeholder", "search works")
+    li_search = generate_xpath_query("//h3", "text()", "works", "illustrations and manga", "illustrations") + "/ancestor::section[1]/div[2]//li"
+    premium_search = generate_xpath_query("//h3", 'text()', 'popular works') + "/ancestor::section[1]/div[2]//li"
     search_param = {
         "bar_search": bar_search,
         "li_search": li_search,
@@ -135,9 +135,9 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     # Click show all results
     try:
         time.sleep(1)
-        show_all_div = driver.find_element(By.XPATH, "//div[contains(text(), 'Show all')]")
+        show_all_div = driver.find_element(By.XPATH, case_insensitive_xpath_contains("//div", 'Show all'))
         if show_all_div:
-            driver.find_element(By.XPATH, '//*[@class="sc-d98f2c-0 sc-s46o24-1 dAXqaU"]').click()
+            show_all_div.click()
     except:
         pass
     
@@ -147,7 +147,7 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     if freemiumSearch:
         while len(image_locations) < num_pics*num_pages:
             search_image(driver,exec_path,filters,search_param=search_param,searchLimit=searchLimit)
-            if not valid_page(driver) and len(image_locations) < num_pics*num_pages:
+            if len(image_locations) < num_pics*num_pages and not valid_page(driver):
                 print("Reached end of search results")
                 break
     driver.quit()
@@ -398,3 +398,6 @@ def process_ai_mode(imageLink, image, driver, exec_path):
 def case_insensitive_xpath_contains(xpath, text):
     return f"{xpath}[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{text.lower()}')]"
 
+
+def generate_xpath_query(base_xpath, attribute, *args):
+    return base_xpath + "[" + " or ".join(f"translate({attribute}, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{arg.lower()}'" for arg in args) + "]"

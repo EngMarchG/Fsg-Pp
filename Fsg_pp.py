@@ -52,7 +52,7 @@ async def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,
 async def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
     driver = driver_instance.create_driver()
     args_dict = {'driver': driver, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages, 'filters': filters, 'bl_tags': bl_tags, 'inc_tags': inc_tags, 'exec_path': exec_path,'imageControl':imageControl}
-    result = await run_in_executor(getOrderedDanbooruImages, args_dict)
+    result = await getOrderedDanbooruImages(**args_dict)
     return danbooru_gallery.return_images(result)
 
 async def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
