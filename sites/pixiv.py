@@ -55,13 +55,11 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
 
     # Check if logged in otherwise log in with credentials
     try:
-        # Explicit wait to check for favorite button (only appears for logged in users)
-        WebDriverWait(driver, timeout=6).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Add to your favorites')]")))
-        
-        if driver.find_elements(By.XPATH, "//button[contains(text(), 'Add to your favorites')]"):
-            success_login = True
+        # Check for favorite button (only appears for logged in users)
+        favorite_buttons = driver.find_elements(By.XPATH, case_insensitive_xpath_contains("//button", 'Add to your favorites'))
 
+        if favorite_buttons:
+            success_login = True
         elif user_name and pass_word:
             print("Logging in...")
             if login_handler(driver, exec_path, user_name, pass_word):
@@ -70,9 +68,8 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         if not success_login:
             print("Failed! You are not logged in...")
 
-    except:
-        print("Failed! You are not logged in...")
-        pass
+    except Exception as e:
+        print(f"Failed! You are not logged in... Exception: {e}")
     
     if 1 not in imageControl:
         searchQuery(user_search, driver, search_param["bar_search"], isLoggedIn=success_login)
@@ -245,7 +242,7 @@ def login_handler(driver, exec_path, user_name, pass_word):
     actions.click(user_btn[1]).send_keys(pass_word).perform()
 
     # Log in button
-    driver.find_element(By.XPATH,"//button[contains(text(), 'Log In')]").click()
+    driver.find_element(By.XPATH,"//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'log in')]").click()
 
     return True
 
@@ -396,3 +393,8 @@ def process_ai_mode(imageLink, image, driver, exec_path):
         os.remove(img_loc)
     except:
         return True
+    
+
+def case_insensitive_xpath_contains(xpath, text):
+    return f"{xpath}[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{text.lower()}')]"
+

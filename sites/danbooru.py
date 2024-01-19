@@ -203,10 +203,9 @@ def download_image(exec_path, driver, image=0):
     print(f"\n{tempDLAttr.split('?')[0]}")
     
     img_loc = f"./{exec_path.folder_path}/{tempDLName}"
-    urllib.request.urlretrieve(
-                    tempDLAttr, f"./{exec_path.folder_path}/{tempDLName}"
-                )
+    urllib.request.urlretrieve(tempDLAttr, img_loc)
+    
     if not image:
-        image_locations.append(f"./{exec_path.folder_path}/{tempDLName}")
+        image_locations.append(img_loc)
         image_names.append(f"{tempDLName.split('.')[0]}")
     return img_loc
