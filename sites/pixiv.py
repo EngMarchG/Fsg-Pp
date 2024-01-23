@@ -1,25 +1,21 @@
 import sys
-sys.path.append("..")
-
 import time
-import urllib.request
 import os
 import re
+import aiohttp
+
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 from datetime import date, datetime
 from random import randint
-from commands.driver_instance import create_url_headers, tab_handler
+from commands.driver_instance import create_url_headers, tab_handler, download_file
 from commands.exec_path import imgList
-from commands.universal import searchQuery, save_Search, continue_Search, contains_works
+from commands.universal import *
 from ai.classifying_ai import img_classifier
 
+sys.path.append("..")
 
-def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,searchTypes,viewRestriction,imageControl,
+async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,searchTypes,viewRestriction,imageControl,
                           n_likes,n_bookmarks,n_views, start_date=0,end_date=0, user_name=0, pass_word=0):
     global image_locations, image_names, ultimatium, ai_mode, prev_search
     image_names = imgList(mode=1)
@@ -44,21 +40,19 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         driver.get(link)
 
     # Will use those when not logged in
-    bar_search = generate_xpath_query("//input", "@placeholder", "search works")
-    li_search = generate_xpath_query("//h3", "text()", "works", "illustrations and manga", "illustrations") + "/ancestor::section[1]/div[2]//li"
-    premium_search = generate_xpath_query("//h3", 'text()', 'popular works') + "/ancestor::section[1]/div[2]//li"
     search_param = {
-        "bar_search": bar_search,
-        "li_search": li_search,
-        "premium_search": premium_search,
+        "bar_search": generate_xpath_query("//input", "@placeholder", "search works"),
+        "li_search": generate_xpath_query("//h3", "text()", "works", "illustrations and manga", "illustrations") + "/ancestor::section[1]/div[2]//li",
+        "premium_search": generate_xpath_query("//h3", 'text()', 'popular works') + "/ancestor::section[1]/div[2]//li",
     }
 
     # Check if logged in otherwise log in with credentials
     try:
-        # Check for favorite button (only appears for logged in users)
-        favorite_buttons = driver.find_elements(By.XPATH, case_insensitive_xpath_contains("//button", 'Add to your favorites'))
+        # Check for create an account (only appears for non-logged in users). Must wait page.
+        contains_works(driver, search_param["bar_search"])
+        logged_out_button = driver.find_elements(By.XPATH, case_insensitive_xpath_contains("//a", 'Create an account'))
 
-        if favorite_buttons:
+        if not logged_out_button:
             success_login = True
         elif user_name and pass_word:
             print("Logging in...")
@@ -71,8 +65,11 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     except Exception as e:
         print(f"Failed! You are not logged in... Exception: {e}")
     
+    if not success_login:
+        is_lang_en(driver)
+
     if 1 not in imageControl:
-        searchQuery(user_search, driver, search_param["bar_search"], isLoggedIn=success_login)
+        searchQuery(user_search, driver, search_param["bar_search"], mode=0)
     time.sleep(2)
 
     if start_date and not success_login:
@@ -83,20 +80,15 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
         driver.get(cur_url[0] + f"?scd={start_date}&ecd={end_date}&" + cur_url[1])
         time.sleep(2)
 
-    premiumSearch = 1 if 0 in searchTypes else 0
-    freemiumSearch = 1 if 1 in searchTypes else 0
-    pg_friendly = 1 if 0 in viewRestriction else 0
-    r_18 = 1 if 1 in viewRestriction else 0
     ultimatium = 1 if 0 in imageControl else 0
-    order_by_oldest = 1 if 2 in imageControl else 0
     ai_mode = 1 if 3 in imageControl else 0
 
     if not contains_works(driver, search_param["li_search"]):
         print("No works found...")
         return []
     
-    if premiumSearch == 1:
-        search_image(driver, exec_path, filters, search_param)
+    if 0 in searchTypes:
+        await search_image(driver, exec_path, filters, search_param)
 
     # Switch to english
     try:
@@ -105,9 +97,10 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     except:
         pass
 
+
     # Apply filters if logged in
-    if success_login:
-        try:
+    try:
+        if success_login:
             driver.find_element(By.XPATH, "/html/body/div[1]/div[2]/div/div[3]/div/div[5]/nav/a[2]").click()
             print("Illustrations only")
             time.sleep(1)
@@ -115,39 +108,33 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
             mode = ""
             order = ""
 
-            if pg_friendly == 1 and r_18 == 1:
+            if 0 in viewRestriction and 1 in viewRestriction:
                 print("PG Friendly and r-18")
-            elif pg_friendly == 1:
+            elif 0 in viewRestriction:
                 mode = "mode=safe&"
                 print("PG Friendly")
-            elif r_18 == 1:
+            elif 1 in viewRestriction:
                 mode = "mode=r18&"
                 print("r-18")
-            if order_by_oldest == 1:
+            if 2 in imageControl:
                 order = "order=date&"
                 print("Order by oldest")
 
             cur_url = driver.current_url.split("?")
             driver.get(cur_url[0] + f"?{order}{mode}" + cur_url[1])
-        except:
-            pass
-    
-    # Click show all results
-    try:
-        time.sleep(1)
-        show_all_div = driver.find_element(By.XPATH, case_insensitive_xpath_contains("//div", 'Show all'))
-        if show_all_div:
-            show_all_div.click()
-    except:
-        pass
+        else:
+            if contains_works(driver, case_insensitive_xpath_contains("//div", 'Show all')):
+                driver.find_element(By.XPATH, case_insensitive_xpath_contains("//div", 'Show all')).click()
+    except Exception as e:
+        print(f"Failed to apply filters or show all works... Exception: {e}")
     
     prev_search = len(image_locations)
     curr_page = driver.current_url
 
-    if freemiumSearch:
+    if 1 in searchTypes or searchTypes == []:
         while len(image_locations) < num_pics*num_pages:
-            search_image(driver,exec_path,filters,search_param=search_param,searchLimit=searchLimit)
-            if len(image_locations) < num_pics*num_pages and not valid_page(driver):
+            await search_image(driver,exec_path,filters,search_param=search_param,searchLimit=searchLimit)
+            if len(image_locations) < num_pics*num_pages and not valid_page(driver, ['XPATH', 'XPATH'], ['//*[@class="sc-xhhh7v-0 kYtoqc"]', './/a']):
                 print("Reached end of search results")
                 break
     driver.quit()
@@ -155,7 +142,7 @@ def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,search
     return image_locations
 
 
-def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount": 1, "imagecount": 99}):
+async def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount": 1, "imagecount": 99}):
     # Searches using premium or freemium
     search_type = awaitPageLoad(driver=driver,searchLimit=searchLimit,search_param=search_param)
     if search_type == -1:
@@ -164,29 +151,28 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
     # The main image searcher
     for page in range(searchLimit["pagecount"]):
         
-        temp_img_len = len(image_locations)
-        WebDriverWait(driver, timeout=9).until(
-            EC.presence_of_element_located(
-                (By.XPATH, search_param["li_search"] + "//a")))  
+        temp_img_len = len(image_locations) 
+        contains_works(driver, search_param["li_search"] + "//div[@type='illust']//a")
         images = search_image_type(search_type, driver, search_param=search_param)
 
         for image in images:
             if len(image_locations) - prev_search >= searchLimit["imagecount"]*searchLimit["pagecount"] or len(image_locations) - temp_img_len >= searchLimit["imagecount"]:
                 break
-            image = image.find_element(By.XPATH, "." + "/" + "/a")
+            
+            image = image.find_element(By.XPATH, ".//div[@type='illust']//a")
             imageLink = image.find_elements(By.XPATH, ".//img")
 
             if image.get_attribute("href").rsplit("/", 1)[-1] not in image_names:
-                if ai_mode == 1 and process_ai_mode(imageLink, image, driver, exec_path):
+                if ai_mode == 1 and await process_ai_mode(imageLink, image, driver, exec_path):
                     continue
 
                 try:
                     if sum(filters.values()) == 0 and len(imageLink): # Dl the image directly from the grid
-                        thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path)
+                        await thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path)
                     
                     else: # Dl the image from the image page (opens a new tab)
                         driver, tempImg = tab_handler(driver=driver, image=image)
-                        WebDriverWait(driver, timeout=11).until(EC.presence_of_element_located((By.XPATH, "//div[@role='presentation']")))
+                        contains_works(driver, "//div[@role='presentation']")
                         tempDL = driver.find_element(By.XPATH, "//div[@role='presentation']//img")
 
                         imagePopularity = parseImageData(filters=filters, 
@@ -196,21 +182,21 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
                         if filterOptions(filters, imagePopularity=imagePopularity): # Check if image filters are satisfied
                             tempDLLink = tempDL.get_attribute("src")
 
-                            # Dl the original rez image
+                            # Dl the original resolution image
                             if ultimatium:
                                 tempDLLink = tempDLLink.replace("img-master", "img-original"
                                 ).replace("_master1200", "")
 
-                            download_image(imageLink=tempDLLink, exec_path=exec_path, driver=driver)
+                            await download_image(imageLink=tempDLLink, exec_path=exec_path, driver=driver)
                         else:
                             print("\nImage filters not satisfied...")
                         driver = tab_handler(driver=driver)
                         time.sleep(0.3)
 
                 # In case of stale element or any other errors
-                except:
+                except Exception as e:
                     if driver.window_handles[-1] != driver.window_handles[0]:
-                        print("\nI ran into an error, moving on...")
+                        print(f"\nI ran into an error, moving on...{e}")
                         driver = tab_handler(driver=driver)
                     time.sleep(randint(1, 3) + randint(0, 9) / 10)
                     continue
@@ -218,7 +204,7 @@ def search_image(driver,exec_path,filters,search_param,searchLimit={"pagecount":
             else:
                 print("\nImage already exists, moving to another image...")
             save_Search(driver, mode=0)
-        if not valid_page(driver):
+        if not valid_page(driver, ['XPATH', 'XPATH'], ['//*[@class="sc-xhhh7v-0 kYtoqc"]', './/a']):
             break
 
 
@@ -228,9 +214,7 @@ def login_handler(driver, exec_path, user_name, pass_word):
     login_btn = driver.find_elements(By.XPATH, "//*[@class='sc-oh3a2p-4 gHKmNu']//a")[1]
     login_btn.click()
 
-    WebDriverWait(driver, timeout=11).until(
-        EC.presence_of_element_located((By.XPATH, "//*[@class='sc-2o1uwj-0 elngKN']"))
-    )
+    contains_works(driver, "//*[@class='sc-2o1uwj-0 elngKN']")
     user_btn = driver.find_element(
         By.XPATH, "//*[@class='sc-2o1uwj-0 elngKN']"
     ).find_elements(By.TAG_NAME, "fieldset")
@@ -247,45 +231,58 @@ def login_handler(driver, exec_path, user_name, pass_word):
     return True
 
 
-def download_image(imageLink, exec_path, driver, mode=1):
+async def download_image(imageLink, exec_path, driver, mode=1):
     tempDLName = imageLink.rsplit("/", 1)[-1]
     img_loc = f"./{exec_path.folder_path}/{tempDLName}"
     if not ultimatium or not mode:
-        installUrlOpeners(driver=driver,mode=0)
+        headers = installUrlOpeners(driver=driver,mode=0)
     else:
-        installUrlOpeners(imageLink)
-    try:
-        requestUrlretrieve(imageLink=imageLink, img_loc=img_loc)
-    except:
-        imageLink = imageLink.rsplit(".",1)[0]+".png"
-        requestUrlretrieve(imageLink, img_loc=img_loc)
-    
-    print(f"\n{imageLink}")
-    if mode:
-        image_locations.append(f"./{exec_path.folder_path}/{tempDLName}")
-        image_names.append(f"{tempDLName.split('.')[0]}")
-    else:
-        return img_loc
+        headers = installUrlOpeners(imageLink)
+
+    for attempt in range(2):
+        try:
+            await download_file(imageLink, img_loc, headers)
+        except Exception as e:  # Catch the exception raised by download_file
+            if attempt < 1:  # Only retry if this is the first attempt
+                imageLink = imageLink.rsplit(".",1)[0]+".png"
+                headers = installUrlOpeners(imageLink)
+            else:
+                raise  # Re-raise the exception if this is the second attempt
+        else:
+            print(f"\n{imageLink}")
+            if mode:
+                image_locations.append(f"./{exec_path.folder_path}/{tempDLName}")
+                image_names.append(f"{tempDLName.split('.')[0]}")
+            return img_loc
 
 
-def thumbnailDownloader(imageLink, image, driver, exec_path, mode=1):
+async def thumbnailDownloader(imageLink, image, driver, exec_path, mode=1):
     imageLink = image_type(imageLink=imageLink, mode=mode)
 
     action = ActionChains(driver=driver)
     action.move_to_element(image.find_element(By.XPATH, ".//img")).perform()
 
-    return download_image(imageLink=imageLink, exec_path=exec_path, driver=driver, mode=mode)
+    return await download_image(imageLink=imageLink, exec_path=exec_path, driver=driver, mode=mode)
 
 
-######## URLLIB LIBRARY ########
+def is_lang_en(driver):
+    try:
+        anchors = driver.find_elements(By.XPATH, '//*[@class="sc-93qi7v-2 hbGpVM"]//a')
+        for n_iter,anchor in enumerate(anchors):
+            if anchor.get_attribute("lang") =="en":
+                driver.execute_script("arguments[0].click();", anchor)
+    except Exception as e:
+        # You are either in english or they changed the xpath
+        pass
+
+
+######## HEADER CONSTRUCTION ########
 def installUrlOpeners(driver,mode=1): # Mode 0 means its a thumbnail
     if ultimatium and mode:
-        urllib.request.install_opener(create_url_headers(driver))
+        header = create_url_headers(driver)
     else:
-        urllib.request.install_opener(create_url_headers(driver.current_url))
-
-def requestUrlretrieve(imageLink, img_loc): # Download the image
-    urllib.request.urlretrieve(imageLink, img_loc)
+        header = create_url_headers(driver.current_url)
+    return header
 
 
 ######## HELPER FUNCTIONS (UNLIKELY TO CHANGE) ########
@@ -314,11 +311,7 @@ def awaitPageLoad(driver, searchLimit, search_param, search_type=0):
     # Waits on the page to load (for popular or freemium)
     if searchLimit["imagecount"] == 99:
         try:
-            WebDriverWait(driver, timeout=12).until(
-                EC.presence_of_element_located(
-                    (By.XPATH, search_param["premium_search"])
-                )
-            )
+            contains_works(driver, search_param["premium_search"], timeout=10)
             print("Premium section found, searching for images...")
         except:
             print("No popular section")
@@ -326,9 +319,7 @@ def awaitPageLoad(driver, searchLimit, search_param, search_type=0):
             return search_type
     else:
         try:
-            WebDriverWait(driver, timeout=12).until(
-                EC.presence_of_element_located((By.XPATH, search_param["li_search"]))
-            )
+            contains_works(driver, search_param["li_search"])
             print("\nFreemium section found, searching for images...")
         except:
             driver.refresh()
@@ -353,23 +344,6 @@ def parseImageData(Data, filters):
     return parsedData
 
 
-def valid_page(driver):
-    cur_url = driver.current_url
-    try:
-        next_page = (
-            driver.find_element(By.XPATH, '//*[@class="sc-xhhh7v-0 kYtoqc"]')
-            .find_elements(By.XPATH, ".//a")[-1]
-            .get_attribute("href")
-        )
-        if cur_url == next_page:
-            return 0
-        if next_page:
-            driver.get(next_page)
-        return 1
-    except:
-        return 0
-
-
 def date_handler(sel_date):
     temp = sel_date.split("-")
     try:
@@ -379,10 +353,10 @@ def date_handler(sel_date):
     return 1
 
 
-def process_ai_mode(imageLink, image, driver, exec_path):
+async def process_ai_mode(imageLink, image, driver, exec_path):
     try:
         # Dl the image thumbnail from the grid
-        img_loc = thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
+        img_loc = await thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
 
         if img_classifier(img_loc):
             print("AI Mode: I approve this image")

@@ -21,6 +21,18 @@ finally:
 
 
 def imgList(mode=0):
+    """
+    Returns a list of image filenames in the specified format based on the mode.
+
+    Args:
+        mode (int, optional): Determines the format of the image filenames. 
+                              If 0 (default), returns filenames without extensions (used for Danbooru).
+                              If 1, returns filenames without suffixes after "_" (used for Pixiv).
+                              If 2, returns all filenames as is (used for Zerochan and good for general sites).
+
+    Returns:
+        list: A list of image filenames in the specified format.
+    """
     if mode==0: # Danbooru
         return [image.split(" ")[-1].split(".")[0] for image in os.listdir(imagePath) if image.split(".")[-1] in ["jpg","png","jpeg"]]
     if mode==1: # Pixiv

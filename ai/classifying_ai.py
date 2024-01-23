@@ -9,6 +9,17 @@ model = YOLO(model_path)
 
 
 def img_classifier(image, classifer_type=0):
+    """
+    Classifies an image using a pre-trained YOLO model.
+
+    Args:
+        image (str): The path to the image to be classified.
+        classifer_type (int, optional): Determines the type of classifier. If 0, the function returns a boolean value indicating whether the image is classified as "good". 
+                                        If non-zero, the function saves the image in a directory and returns a list of paths to the saved images. Defaults to 0.
+
+    Returns:
+        list or bool: If classifer_type is non-zero, returns a list of paths to the saved images. If classifer_type is 0, returns a boolean value indicating whether the image is classified as "good".
+    """
 
     test_images = []
     test_images.append(image)

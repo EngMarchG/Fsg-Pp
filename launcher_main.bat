@@ -12,7 +12,8 @@ cd /d "%~dp0"
 call venv\Scripts\activate
 
 set OPEN_IN_BROWSER=-o
-python Fsg_pp.py 
+set SUPPRESS_LOGS=-s
+python main.py 
 
 rem Check the exit code of the previous command
 if %errorlevel% neq 0 (

@@ -6,6 +6,17 @@ import random
 from pathlib import Path
 
 def autoCropImages(image,scale_factor):
+    """
+    Automatically crops images based on detected faces.
+
+    Args:
+        image (str): The path to the image to be cropped.
+        scale_factor (float): The scale factor to apply to the bounding box of the detected face.
+
+    Returns:
+        list: A list of paths to the cropped images.
+    """
+    
     # Load a model
     model = YOLO("./cv_files/AniFaceDet.pt")
 

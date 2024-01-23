@@ -1,9 +1,8 @@
-import numpy as np
-import gradio as gr
 import os
+import asyncio
+import gradio as gr
 import commands.exec_path as exec_path
 import commands.driver_instance as driver_instance
-import asyncio
 
 from commands.universal import searchQuery
 from ai.autocrop import autoCropImages
@@ -30,41 +29,42 @@ class ImageGallery:
     def send_number(self): 
         return self.imgz[int(self.selected)], gr.Tabs(selected=0)
 
+
 # Create an instance of ImageGallery for each tab
 pixiv_gallery = ImageGallery()
 danbooru_gallery = ImageGallery()
 zerochan_gallery = ImageGallery()
 yandex_gallery = ImageGallery()
 
-# Define async functions for each helper function
-async def run_in_executor(func, args_dict):
-    loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(None, lambda: func(**args_dict))
 
 # Helper functions
 async def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
              start_date, end_date, user_name, pass_word):
-    driver = driver_instance.create_driver(profile=1)
+    driver_future = asyncio.ensure_future(driver_instance.create_driver_async(profile=1))
+    driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages,'searchTypes':searchTypes,'viewRestriction':viewRestriction,'imageControl':imageControl, 'n_likes': n_likes, 'n_bookmarks': n_bookmarks, 'n_views': n_views, 'start_date': start_date,'end_date':end_date, 'user_name': user_name, 'pass_word': pass_word}
-    result = await run_in_executor(getOrderedPixivImages, args_dict)
+    result = await getOrderedPixivImages(**args_dict)
     return pixiv_gallery.return_images(result)
 
 async def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
-    driver = driver_instance.create_driver()
+    driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
+    driver = await driver_future
     args_dict = {'driver': driver, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages, 'filters': filters, 'bl_tags': bl_tags, 'inc_tags': inc_tags, 'exec_path': exec_path,'imageControl':imageControl}
     result = await getOrderedDanbooruImages(**args_dict)
     return danbooru_gallery.return_images(result)
 
 async def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
-    driver = driver_instance.create_driver()
+    driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
+    driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages, 'n_likes': n_likes, 'filters': filters,'imageControl':imageControl}
-    result = await run_in_executor(getOrderedZerochanImages, args_dict)
+    result = await getOrderedZerochanImages(**args_dict)
     return zerochan_gallery.return_images(result)
 
 async def yandex_imgs(searchQuery, num_pics, filters,imageOrientation):
-    driver = driver_instance.create_driver()
+    driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
+    driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'filters': filters,'imageOrientation':imageOrientation}
-    result = await run_in_executor(getOrderedYandexImages, args_dict)
+    result = await getOrderedYandexImages(**args_dict)
     return yandex_gallery.return_images(result)
 
 
@@ -88,12 +88,12 @@ async def create_gallery_tab(tab_name, search_fn, search_inputs, gallery_instanc
             open_btn = gr.Button(value="Open 📁",variant='secondary')
             open_btn.click(fn=open_folder, inputs=folder_input)
 
-    gallery.select(gallery_instance.get_select_index, None)
+    gallery.select(gallery_instance.get_select_index, None, concurrency_limit=4, queue=True)
     green_btn.click(search_fn, search_inputs, outputs=gallery)
 
 
 # Main Layout of the GUI
-with gr.Blocks(css='style.css') as demo:
+with gr.Blocks(css='style.css', title="Fsg-Pp") as demo:
     with gr.Tabs(selected=1) as tabs:
         folder_input = gr.Textbox(value="./Images/", label="Enter Folder Path", visible=False)
         
@@ -114,7 +114,7 @@ with gr.Blocks(css='style.css') as demo:
 
 
         # Pixiv Tab
-        with gr.TabItem("Pixiv", id=1):
+        with gr.TabItem("Pixiv", id=1, elem_id="pixiv_tab", elem_classes="tab-button"):
             with gr.Row():
                 with gr.Column():
                     searchQuery = gr.Textbox(label="Search Query", placeholder="Suggested to use the char's full name")
@@ -199,7 +199,7 @@ with gr.Blocks(css='style.css') as demo:
                     asyncio.run(create_gallery_tab("Zerochan", zero_imgs, zerochan_inputs, zerochan_gallery, zerochan_gallery.send_number))
 
 
-    # Yandex Tab
+        # Yandex Tab
         with gr.TabItem("Yandex", id=4):
             with gr.Row():
                 with gr.Column():
@@ -216,6 +216,7 @@ with gr.Blocks(css='style.css') as demo:
                 yandex_inputs = [searchQuery, num_pics, filters,imageOrientation]
                 asyncio.run(create_gallery_tab("Yandex", yandex_imgs, yandex_inputs, yandex_gallery, yandex_gallery.send_number))
 
-# Check for '-o' in environment variables
-open_in_browser = os.environ.get('ARGUMENT') == '-o'
-demo.launch(inbrowser=open_in_browser)
+
+if __name__ == '__main__':
+    open_in_browser = os.environ.get('OPEN_IN_BROWSER') == '-o'
+    demo.launch(inbrowser=open_in_browser, allowed_paths=["./bg"])
