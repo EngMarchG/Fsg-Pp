@@ -12,6 +12,18 @@ fi
 # Set the current directory to the script's location
 cd "$(dirname "$0")"
 
+# Check if the venv directory exists
+if [ -d "venv" ]; then
+    # Ask the user if they want to delete the venv directory
+    read -p "The venv directory already exists. Do you want to delete it? (y/n): " choice
+
+    if [[ "$choice" == [Yy]* ]]; then
+        # Delete the venv directory
+        echo "Deleting the venv directory..."
+        rm -rf venv
+    fi
+fi
+
 # Create the Python virtual environment using python -m venv venv
 echo "Creating Python virtual environment..."
 python3 -m venv venv
@@ -52,10 +64,10 @@ fi
 if [ "$install_gpu" = true ]; then
     # Install PyTorch with GPU support on Linux
     python3 -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
-    python3 -m pip install ultralytics
+    python3 -m pip install ultralytics==8.0.228
 else
-    # Install Ultralytics using pip
-    python3 -m pip install ultralytics
+    # Install ultralytics==8.0.228 using pip
+    python3 -m pip install ultralytics==8.0.228
 fi
 
 
