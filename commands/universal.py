@@ -127,6 +127,7 @@ def continue_Search(driver, link, mode=0):
         if len(lines) >= line_to_read and lines[line_to_read - 1].strip() != '':
             url = lines[line_to_read - 1].strip()
             driver.get(url)
+            return 1
         else:
             driver.get(link)
     except:

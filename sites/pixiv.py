@@ -1,13 +1,12 @@
-import sys
-import time
 import os
 import re
-import aiohttp
+import sys
+import time
 
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from datetime import date, datetime
 from random import randint
+from datetime import date, datetime
 from commands.driver_instance import create_url_headers, tab_handler, download_file
 from commands.exec_path import imgList
 from commands.universal import *
@@ -23,6 +22,7 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
     prev_search = 0
     link = "https://www.pixiv.net/tags/illustration"
     success_login = False
+    is_search_continued = 0
 
     filters = {
         "likes": 0 if not n_likes else n_likes,
@@ -35,7 +35,7 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
     end_date = date.today() if not date_handler(end_date) else end_date
 
     if 1 in imageControl:
-        continue_Search(driver, link, mode=0)
+        is_search_continued = continue_Search(driver, link, mode=0)
     else:
         driver.get(link)
 
@@ -50,6 +50,7 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
     try:
         # Check for create an account (only appears for non-logged in users). Must wait page.
         contains_works(driver, search_param["bar_search"])
+        time.sleep(1)
         logged_out_button = driver.find_elements(By.XPATH, case_insensitive_xpath_contains("//a", 'Create an account'))
 
         if not logged_out_button:
@@ -68,7 +69,7 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
     if not success_login:
         is_lang_en(driver)
 
-    if 1 not in imageControl:
+    if not is_search_continued:
         searchQuery(user_search, driver, search_param["bar_search"], mode=0)
     time.sleep(2)
 

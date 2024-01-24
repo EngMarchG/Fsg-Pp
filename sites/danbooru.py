@@ -1,6 +1,5 @@
 import os
 import time
-import aiohttp
 
 from random import randint
 from selenium.webdriver.common.by import By
@@ -11,13 +10,15 @@ from ai.classifying_ai import img_classifier
 
 
 async def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, filters, bl_tags, inc_tags, exec_path, imageControl):
-    global image_locations, bl_tags_list, inc_tags_list, image_names, ai_mode,rating_filters
+    global image_locations, bl_tags_list, inc_tags_list, image_names, ai_mode, rating_filters
     image_names = imgList(mode=0)
     image_locations = []
     link = "https://danbooru.donmai.us/"
+    is_search_continued = 0
 
-    if 0 in imageControl:
-        continue_Search(driver, link, mode=1)
+    # Must pay attention if imageControl gets other features later!
+    if imageControl:
+        is_search_continued = continue_Search(driver, link, mode=1)
     else:
         driver.get(link)
 
@@ -27,12 +28,10 @@ async def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, fil
     rating_filters = ["q","s","e"] if 4 in filters else []
 
     # Tag list creation
-    score = 1 if 0 in filters else 0
     match_type = 1 if 1 in filters else 0
     r_18 = pg_lenient() if 2 in filters else []
     r_18 = pg_strict() if 3 in filters else r_18
     ai_mode = 1 if 5 in filters else 0
-    continue_search = 1 if imageControl else 0
 
     # Replace spaces to make spaces feasible by the user
     user_search = user_search.replace(" ", "_")
@@ -40,10 +39,11 @@ async def getOrderedDanbooruImages(driver, user_search, num_pics, num_pages, fil
     bl_tags_list = create_filter_tag_list(bl_tags, r_18)
     inc_tags_list = create_tag_list(inc_tags, match_type) if inc_tags else []
     
-    searchQuery(user_search, driver, '//*[@name="tags"]', execute_times=2)
-    if score:
-        time.sleep(1.2)
-        search_bar_update(driver, '//*[@name="tags"]', " order:score", to_append=True, to_execute=["ENTER"])
+    if not is_search_continued:
+        searchQuery(user_search, driver, '//*[@name="tags"]', execute_times=2)
+        if 0 in filters:
+            time.sleep(1.2)
+            search_bar_update(driver, '//*[@name="tags"]', " order:score", to_append=True, to_execute=["ENTER"])
     
     if not contains_works(driver, '//*[@class="posts-container gap-2"]'):
         print("No works found...")

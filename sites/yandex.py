@@ -3,7 +3,6 @@ import re
 import time
 import urllib.request
 import urllib.parse
-import aiohttp
 
 from random import randint
 from selenium.webdriver.common.by import By

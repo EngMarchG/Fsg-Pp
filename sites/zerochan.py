@@ -1,7 +1,6 @@
 import os
 import time
 import asyncio
-import aiohttp
 
 from random import randint
 from selenium.webdriver.common.by import By
@@ -20,15 +19,16 @@ async def getOrderedZerochanImages(driver, exec_path, user_search, num_pics, num
     searchLimit={'pagecount': num_pages,'imagecount':num_pics}
     user_search = user_search.replace(" ","+").capitalize()
     link = "https://www.zerochan.net/" + user_search
+    is_search_continued = 0
 
-    if not imageControl:
-        driver.get(link)
+    # Must pay attention if imageControl gets other features later!
     if imageControl:
-        continue_Search(driver, link, mode=2)
+        is_search_continued = continue_Search(driver, link, mode=2)
+    else:
+        driver.get(link)
 
-    if driver.current_url == "https://www.zerochan.net/":
+    if not is_search_continued and imageControl:
         print("You continued for the first time, but there was no previous search to continue from!")
-        driver.get(driver.current_url + 'angry')
 
     
     is_valid_search(driver)
