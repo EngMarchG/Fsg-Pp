@@ -151,16 +151,15 @@ async def search_image(driver,exec_path,filters,search_param,searchLimit={"pagec
     
     # The main image searcher
     for page in range(searchLimit["pagecount"]):
-        
         temp_img_len = len(image_locations) 
-        contains_works(driver, search_param["li_search"] + "//div[@type='illust']//a")
+        contains_works(driver, search_param["li_search"] + "//div//a")
         images = search_image_type(search_type, driver, search_param=search_param)
 
         for image in images:
             if len(image_locations) - prev_search >= searchLimit["imagecount"]*searchLimit["pagecount"] or len(image_locations) - temp_img_len >= searchLimit["imagecount"]:
                 break
             
-            image = image.find_element(By.XPATH, ".//div[@type='illust']//a")
+            image = image.find_element(By.XPATH, ".//div//a")
             imageLink = image.find_elements(By.XPATH, ".//img")
 
             if image.get_attribute("href").rsplit("/", 1)[-1] not in image_names:
