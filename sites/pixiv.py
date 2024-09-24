@@ -88,8 +88,11 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
         print("No works found...")
         return []
     
+    # Search for images in the premium section
+    premium_pics = 0
     if 0 in searchTypes:
         await search_image(driver, exec_path, filters, search_param)
+        premium_pics = len(image_locations)
 
     # Switch to english
     try:
@@ -133,7 +136,7 @@ async def getOrderedPixivImages(driver,exec_path,user_search,num_pics,num_pages,
     curr_page = driver.current_url
 
     if 1 in searchTypes or searchTypes == []:
-        while len(image_locations) < num_pics*num_pages:
+        while len(image_locations) - premium_pics < num_pics*num_pages:
             await search_image(driver,exec_path,filters,search_param=search_param,searchLimit=searchLimit)
             if len(image_locations) < num_pics*num_pages and not valid_page(driver, ['XPATH', 'XPATH'], ['//*[@class="sc-xhhh7v-0 kYtoqc"]', './/a']):
                 print("Reached end of search results")
@@ -164,7 +167,7 @@ async def search_image(driver,exec_path,filters,search_param,searchLimit={"pagec
 
             if image.get_attribute("href").rsplit("/", 1)[-1] not in image_names:
                 if ai_mode == 1 and await process_ai_mode(imageLink, image, driver, exec_path):
-                    continue
+                    continue # Skip the image if AI mode is on and it is not approved
 
                 try:
                     if sum(filters.values()) == 0 and len(imageLink): # Dl the image directly from the grid
@@ -234,10 +237,7 @@ def login_handler(driver, exec_path, user_name, pass_word):
 async def download_image(imageLink, exec_path, driver, mode=1):
     tempDLName = imageLink.rsplit("/", 1)[-1]
     img_loc = f"./{exec_path.folder_path}/{tempDLName}"
-    if not ultimatium or not mode:
-        headers = installUrlOpeners(driver=driver,mode=0)
-    else:
-        headers = installUrlOpeners(imageLink)
+    headers = get_selenium_headers(driver)
 
     for attempt in range(2):
         try:
@@ -283,6 +283,26 @@ def installUrlOpeners(driver,mode=1): # Mode 0 means its a thumbnail
     else:
         header = create_url_headers(driver.current_url)
     return header
+
+def get_selenium_headers(driver):
+    headers = {
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'en-US,en;q=0.9,it;q=0.8,ru;q=0.7,ja;q=0.6,en-GB;q=0.5',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Referer': 'https://www.pixiv.net/',  # Important to include referer
+        'User-Agent': driver.execute_script("return navigator.userAgent;"),  # Get dynamic User-Agent from browser
+        'Sec-CH-UA': driver.execute_script("return navigator.userAgentData.brands.map(b => b.brand + ';v=' + b.version).join(', ');"),
+        'Sec-CH-UA-Mobile': '?0',
+        'Sec-CH-UA-Platform': driver.execute_script("return navigator.userAgentData.platform;"),
+        'Sec-Fetch-Dest': 'image',
+        'Sec-Fetch-Mode': 'no-cors',
+        'Sec-Fetch-Site': 'cross-site',
+        'Connection': 'keep-alive',
+        'Priority': 'i',
+    }
+    return headers
 
 
 ######## HELPER FUNCTIONS (UNLIKELY TO CHANGE) ########
@@ -366,6 +386,7 @@ async def process_ai_mode(imageLink, image, driver, exec_path):
             return True
         os.remove(img_loc)
     except:
+        print("AI Mode: Skipping this image due to an error")
         return True
     
 
