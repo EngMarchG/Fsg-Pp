@@ -377,14 +377,15 @@ async def process_ai_mode(imageLink, image, driver, exec_path):
     try:
         # Dl the image thumbnail from the grid
         img_loc = await thumbnailDownloader(imageLink=imageLink, image=image, driver=driver, exec_path=exec_path, mode=0)
+        decision = True
 
         if img_classifier(img_loc):
             print("AI Mode: I approve this image")
-            return False
+            decision = False
         else:
             print("AI Mode: Skipping this image")
-            return True
         os.remove(img_loc)
+        return decision
     except:
         print("AI Mode: Skipping this image due to an error")
         return True
