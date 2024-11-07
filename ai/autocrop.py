@@ -6,25 +6,14 @@ import random
 from pathlib import Path
 
 def autoCropImages(image,scale_factor):
-    """
-    Automatically crops images based on detected faces.
-
-    Args:
-        image (str): The path to the image to be cropped.
-        scale_factor (float): The scale factor to apply to the bounding box of the detected face.
-
-    Returns:
-        list: A list of paths to the cropped images.
-    """
-    
-    # Load a model
-    model = YOLO("./cv_files/AniFaceDet.pt")
+    model_path = os.path.join(os.getcwd(), r"cv_files/AniFaceDet.pt")
+    model = YOLO(model_path)
 
     test_images = []
     test_images.append(image)
 
     # Create a directory for saving cropped images
-    relative_dir = './Images/cropped'
+    relative_dir = "./Images/cropped"
     cropped_dir = os.path.abspath(relative_dir)
     if not os.path.exists(cropped_dir):
         os.makedirs(cropped_dir)
@@ -83,14 +72,14 @@ def autoCropImages(image,scale_factor):
             cropped_image = image.crop((cropped_x1, cropped_y1, cropped_x2, cropped_y2))
 
             # Save the cropped image with the original filename and an index
-            cropped_image_name = '{}_cropped_{}_scale_{}.jpg'.format(os.path.splitext(os.path.split(img)[-1])[0], i, scale_factor)
+            cropped_image_name = "{}_cropped_{}_scale_{}.jpg".format(os.path.splitext(os.path.split(img)[-1])[0], i, scale_factor)
             cropped_image_path = os.path.join(cropped_dir, cropped_image_name)
             cropped_image.save(fp=cropped_image_path)
 
             # Appending Cropped images in an array to display in gradio for end-user
             imagesToReturn.append(cropped_image_path)
 
-            print('Cropped image saved:', cropped_image_path)
+            print("Cropped image saved:", cropped_image_path)
 
             # Draw bounding boxes on the original image
             draw = ImageDraw.Draw(image)

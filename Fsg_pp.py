@@ -1,6 +1,7 @@
 import os
 import asyncio
 import gradio as gr
+import pkg_resources
 import commands.exec_path as exec_path
 import commands.driver_instance as driver_instance
 
@@ -24,7 +25,7 @@ class ImageGallery:
 
     def get_select_index(self, evt: gr.SelectData):
         self.selected = evt.index
-        return self.selected
+
 
     def send_number(self): 
         return self.imgz[int(self.selected)], gr.Tabs(selected=0)
@@ -38,29 +39,30 @@ yandex_gallery = ImageGallery()
 
 
 # Helper functions
-async def pix_imgs(searchQuery, num_pics, num_pages,searchTypes,viewRestriction,imageControl,n_likes, n_bookmarks, n_views, 
-             start_date, end_date, user_name, pass_word):
+async def pix_imgs(searchQuery, num_pics, num_pages, searchTypes, viewRestriction,
+                   imageControl, n_likes, n_bookmarks, n_views,
+                   start_date, end_date, user_name, pass_word):
     driver_future = asyncio.ensure_future(driver_instance.create_driver_async(profile=1))
     driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages,'searchTypes':searchTypes,'viewRestriction':viewRestriction,'imageControl':imageControl, 'n_likes': n_likes, 'n_bookmarks': n_bookmarks, 'n_views': n_views, 'start_date': start_date,'end_date':end_date, 'user_name': user_name, 'pass_word': pass_word}
     result = await getOrderedPixivImages(**args_dict)
     return pixiv_gallery.return_images(result)
 
-async def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags,imageControl):
+async def danb_imgs(searchQuery, num_pics, num_pages, filters, bl_tags, inc_tags, imageControl):
     driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
     driver = await driver_future
     args_dict = {'driver': driver, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages, 'filters': filters, 'bl_tags': bl_tags, 'inc_tags': inc_tags, 'exec_path': exec_path,'imageControl':imageControl}
     result = await getOrderedDanbooruImages(**args_dict)
     return danbooru_gallery.return_images(result)
 
-async def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters,imageControl):
+async def zero_imgs(searchQuery, num_pics, num_pages, n_likes, filters, imageControl):
     driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
     driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'num_pages': num_pages, 'n_likes': n_likes, 'filters': filters,'imageControl':imageControl}
     result = await getOrderedZerochanImages(**args_dict)
     return zerochan_gallery.return_images(result)
 
-async def yandex_imgs(searchQuery, num_pics, filters,imageOrientation):
+async def yandex_imgs(searchQuery, num_pics, filters, imageOrientation):
     driver_future = asyncio.ensure_future(driver_instance.create_driver_async())
     driver = await driver_future
     args_dict = {'driver': driver, 'exec_path': exec_path, 'user_search': searchQuery, 'num_pics': num_pics, 'filters': filters,'imageOrientation':imageOrientation}
@@ -75,8 +77,8 @@ def open_folder(folder_path, mode=0):
         folder_opened = os.path.abspath(os.path.join(folder_path, "cropped"))
     os.system(f'open "{folder_opened}"' if os.name == 'posix' else f'explorer "{folder_opened}"')
 
-def cropImages(image,crop_scale_factor):
-    return autoCropImages(image,crop_scale_factor)
+def cropImages(image, crop_scale_factor):
+    return autoCropImages(image, crop_scale_factor)
 
 async def create_gallery_tab(tab_name, search_fn, search_inputs, gallery_instance, fn_on_click):
     with gr.Column():
@@ -92,8 +94,13 @@ async def create_gallery_tab(tab_name, search_fn, search_inputs, gallery_instanc
     green_btn.click(search_fn, search_inputs, outputs=gallery)
 
 
+# Check Gradio version
+gradio_version = pkg_resources.get_distribution("gradio").version
+css_param = 'css_paths' if int(gradio_version.split('.')[0]) >= 5 else 'css'
+
+
 # Main Layout of the GUI
-with gr.Blocks(css='style.css', title="Fsg-Pp") as demo:
+with gr.Blocks(**{css_param: 'style.css'}, title="Fsg-Pp",) as demo:
     with gr.Tabs(selected=1) as tabs:
         folder_input = gr.Textbox(value="./Images/", label="Enter Folder Path", visible=False)
         
@@ -102,7 +109,7 @@ with gr.Blocks(css='style.css', title="Fsg-Pp") as demo:
             with gr.Row():
                 with gr.Column():
                     image = gr.Image(type="filepath")
-                    crop_scale_factor = gr.Slider(0.5,3, value=1.2,step=0.1, label="Crop Scale Factor")
+                    crop_scale_factor = gr.Slider(0.5, 3, value=1.2, step=0.1, label="Crop Scale Factor")
                 with gr.Column():
                     outputImages = gr.Gallery(label="Cropped Image Preview", preview=True, object_fit="cover", container=True)
 

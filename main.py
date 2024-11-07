@@ -57,27 +57,33 @@ def check_port(host, port):
 app = FastAPI(middleware=[Middleware(CustomMiddleware)])
 app.mount("/bg", StaticFiles(directory="bg"), name="bg")
 
-some_javascript = """
-<script type="text/javascript">
-window.onload = function() {
-    var observer = new MutationObserver(function(mutations) {
-        var pixivTab = document.querySelector('#pixiv_tab-button');
+some_javascript = "" # The javascript down forces the page to switch to the Pixiv tab on load
+# some_javascript = """
+# <script type="text/javascript">
+# window.onload = function() {
+#     var observer = new MutationObserver(function(mutations) {
+#         var pixivTab = document.querySelector('#pixiv_tab-button');
 
-        if (pixivTab) {
-            pixivTab.click();
-            observer.disconnect();  // Stop observing once the actions are performed
-        }
-    });
+#         if (pixivTab) {
+#             pixivTab.click();
+#             observer.disconnect();  // Stop observing once the actions are performed
+#         }
+#     });
 
-    observer.observe(document, { childList: true, subtree: true });  // Start observing
-};
-</script>
-"""
+#     observer.observe(document, { childList: true, subtree: true });  // Start observing
+# };
+# </script>
+# """
 
 some_css = f"""
 <style>
+div.svelte-zyxd38.margin {{
+  position: relative !important;
+}}
+
 .svelte-15lo0d8.stretch > :nth-child(2) > div > div.svelte-1occ011 > .margin:after,
-.svelte-15lo0d8.stretch > :nth-child(2) > div > div > div.svelte-1occ011 > .margin:after {{
+.svelte-15lo0d8.stretch > :nth-child(2) > div > div > div.svelte-1occ011 > .margin:after,
+div.svelte-zyxd38.margin::after {{
   content: '';
   position: absolute;
   top: 50%;

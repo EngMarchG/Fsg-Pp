@@ -1,34 +1,21 @@
-import commands.exec_path 
-from ultralytics import YOLO
-from PIL import Image, ImageDraw, ImageFont, ImageFile
 import os
 import random
-
-model_path = os.path.join(os.getcwd(), 'cv_files/AniClassifier.pt')
-model = YOLO(model_path)
+from ultralytics import YOLO
+from PIL import Image, ImageDraw, ImageFont, ImageFile
 
 
 def img_classifier(image, classifer_type=0):
-    """
-    Classifies an image using a pre-trained YOLO model.
-
-    Args:
-        image (str): The path to the image to be classified.
-        classifer_type (int, optional): Determines the type of classifier. If 0, the function returns a boolean value indicating whether the image is classified as "good". 
-                                        If non-zero, the function saves the image in a directory and returns a list of paths to the saved images. Defaults to 0.
-
-    Returns:
-        list or bool: If classifer_type is non-zero, returns a list of paths to the saved images. If classifer_type is 0, returns a boolean value indicating whether the image is classified as "good".
-    """
+    model_path = os.path.join(os.getcwd(), r"cv_files/AniClassifier.pt")
+    model = YOLO(model_path)
 
     test_images = []
     test_images.append(image)
     imagesToReturn = []
 
     # Create a directory for saving classified images
-    folder_dir = './Images'
+    folder_dir = "./Images"
     if not os.path.exists(folder_dir):
-        os.makedirs(folder_dir) 
+        os.makedirs(folder_dir)
 
     # Classify images with "good" class in the images folder and save them in the image directory
     for img in test_images:
@@ -47,7 +34,7 @@ def img_classifier(image, classifer_type=0):
                 imagesToReturn.append(folder_dir + img)
                 return imagesToReturn
             
-            # Downloading Thumbnail images so don't save them in the image directory
+            # Downloading Thumbnail images so don"t save them in the image directory
             else:
                 return True
 
